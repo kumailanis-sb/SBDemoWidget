@@ -1,372 +1,512 @@
-<div class="payslips-widget" data-state="hidden">
-  <!-- Header -->
-  <div class="pw-header">
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Payslips</title>
+
+  <style>
+    :root{
+      /* Compact scale for iframe cards */
+      font-size: 14px;
+
+      --bg:#ffffff;
+      --ink:#0f172a;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+
+      --tabBorder:#dfe3ea;
+      --tabActiveBg:#5f88ab;
+      --tabActiveBorder:#1e4e8c;
+      --tabActiveText:#0f2f52;
+
+      --chipBg:#cfe0f5;
+      --chipBorder:#1e4e8c;
+      --chipText:#1e4e8c;
+
+      --card:#f6f7f8;
+      --card2:#f2f3f5;
+
+      --green:#1f7a4a;
+      --chev:#6b7280;
+    }
+
+    *{ box-sizing:border-box; }
+
+    html, body{
+      margin:0;
+      padding:0;
+      background: transparent; /* important for iframe in Staffbase */
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+    }
+
+    /* ===== Widget shell (compact) ===== */
+    .payslips-widget{
+      width: 100%;
+      max-width: 100%;
+      background: var(--bg);
+      border: 1px solid #eef0f3;
+      border-radius: 16px;
+      padding: 16px 14px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ===== Header ===== */
+    .pw-title{
+      margin: 0 0 10px 0;
+      font-size: clamp(1.7rem, 2.2vw, 2.2rem); /* ~24-31px */
+      line-height: 1.08;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .pw-privacy-row{ margin-bottom: 12px; }
+
+    .pw-privacy-toggle{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      background: transparent;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      color: var(--chipText);
+      font-weight: 800;
+      font-size: 1.05rem; /* ~14-15px */
+      user-select:none;
+    }
+
+    .pw-eye{
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      display:grid;
+      place-items:center;
+      background: var(--chipBg);
+      border: 2px solid var(--chipBorder);
+      color: var(--chipBorder);
+      flex: 0 0 auto;
+    }
+
+    /* ===== Tabs ===== */
+    .pw-tabs{
+      display:flex;
+      gap: 10px;
+      overflow-x:auto;
+      padding-bottom: 8px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .pw-tabs::-webkit-scrollbar{ display:none; }
+
+    .pw-tab{
+      border: 2px solid var(--tabBorder);
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-weight: 900;
+      font-size: 1.05rem; /* compact */
+      letter-spacing: -0.01em;
+      color: #111827;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .pw-tab.is-active{
+      background: var(--tabActiveBg);
+      border-color: var(--tabActiveBorder);
+      color: var(--tabActiveText);
+    }
+
+    /* small scroll track under tabs (like your screenshot) */
+    .pw-tab-track{
+      height: 8px;
+      border-radius: 999px;
+      background: #eeeeee;
+      position: relative;
+      margin: 6px 0 12px;
+      overflow:hidden;
+      border: 1px solid #e6e6e6;
+    }
+    .pw-tab-thumb{
+      height: 100%;
+      width: 120px;
+      border-radius: 999px;
+      background: #bdbdbd;
+    }
+
+    /* ===== Cards ===== */
+    .pw-card{
+      background: var(--card);
+      border: 1px solid #eef0f3;
+      border-radius: 20px;
+      padding: 14px 12px;
+    }
+
+    /* ===== Summary ===== */
+    .pw-summary-top{
+      text-align:center;
+      padding: 10px 0 10px;
+    }
+
+    .pw-label{
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: -0.01em;
+    }
+
+    .pw-net{
+      margin-top: 8px;
+      font-size: clamp(2.3rem, 4.6vw, 3.0rem); /* ~32-42px */
+      line-height: 1.02;
+      font-weight: 900;
+      color: var(--green);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .pw-summary-bottom{
+      margin-top: 8px;
+      background: var(--card2);
+      border-radius: 16px;
+      padding: 12px 10px;
+      display:grid;
+      grid-template-columns: 1fr 1px 1fr;
+      align-items:center;
+      gap: 12px;
+    }
+
+    .pw-divider{
+      width: 1px;
+      height: 56px;
+      background: #e2e5ea;
+      border-radius: 1px;
+      justify-self:center;
+    }
+
+    .pw-metric{
+      text-align:center;
+      min-width:0;
+    }
+
+    .pw-value{
+      margin-top: 6px;
+      font-size: clamp(1.25rem, 2.8vw, 1.7rem); /* ~18-24px */
+      line-height: 1.05;
+      font-weight: 900;
+      color: #111827;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== Payslips list ===== */
+    .pw-section-title{
+      margin: 14px 0 10px;
+      font-size: 1.25rem; /* ~17-18px */
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .pw-list{
+      padding: 10px;
+      border-radius: 20px;
+    }
+
+    .pw-row{
+      display:grid;
+      grid-template-columns: 36px 1fr auto 22px;
+      align-items:center;
+      gap: 10px;
+      padding: 12px 10px;
+      border-radius: 16px;
+      text-decoration:none;
+      color: inherit;
+    }
+
+    .pw-pdf{
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display:grid;
+      place-items:center;
+      background: #fff;
+      border: 2px solid #f4c9b4;
+      color: #d0642b;
+    }
+
+    .pw-date{
+      font-size: 1.15rem; /* ~16px */
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color:#111827;
+      white-space: nowrap;
+    }
+
+    .pw-amount{
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .pw-chevron{
+      display:grid;
+      place-items:center;
+      color: var(--chev);
+    }
+
+    /* ===== Hidden privacy state ===== */
+    .payslips-widget[data-state="hidden"] .pw-content{
+      filter: blur(10px);
+      opacity: 0.45;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    .pw-overlay{
+      position:absolute;
+      inset:0;
+      display:none;
+      padding: 14px;
+      background: transparent;
+    }
+
+    .payslips-widget[data-state="hidden"] .pw-overlay{
+      display:grid;
+      place-items:center;
+    }
+
+    .pw-overlay-inner{
+      display:grid;
+      place-items:center;
+      gap: 12px;
+      text-align:center;
+    }
+
+    .pw-overlay-title{
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color:#111827;
+      max-width: 18rem;
+    }
+
+    .pw-overlay-btn{
+      width: 64px;
+      height: 64px;
+      border-radius: 999px;
+      border: 3px solid #0e3e73;
+      background: var(--tabActiveBg);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+    }
+    .pw-overlay-btn svg{ stroke:#0e3e73; }
+  </style>
+</head>
+
+<body>
+  <div class="payslips-widget" data-state="hidden">
     <h1 class="pw-title">My Payslips</h1>
 
-    <button class="pw-privacy-toggle" type="button" aria-label="View payslips">
-      <span class="pw-eye" aria-hidden="true">
-        <!-- eye icon -->
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-      </span>
-      <span class="pw-privacy-text">Tap to view</span>
-    </button>
-  </div>
-
-  <!-- Tabs -->
-  <div class="pw-tabs" role="tablist" aria-label="Payslip months">
-    <button class="pw-tab is-active" role="tab" aria-selected="true" data-month="june2020">June 2020</button>
-    <button class="pw-tab" role="tab" aria-selected="false" data-month="may2020">May 2020</button>
-    <button class="pw-tab" role="tab" aria-selected="false" data-month="apr2020">April 2020</button>
-    <button class="pw-tab" role="tab" aria-selected="false" data-month="mar2020">March 2020</button>
-  </div>
-
-  <!-- Content (blurred when hidden) -->
-  <div class="pw-content">
-    <!-- Summary card -->
-    <section class="pw-card pw-summary" aria-label="Payslip summary">
-      <div class="pw-summary-top">
-        <div class="pw-label">Net Pay</div>
-        <div class="pw-net" data-bind="net">$5,250.91</div>
-      </div>
-
-      <div class="pw-summary-bottom">
-        <div class="pw-metric">
-          <div class="pw-label">Gross Pay</div>
-          <div class="pw-value" data-bind="gross">$7,430.00</div>
-        </div>
-        <div class="pw-divider" aria-hidden="true"></div>
-        <div class="pw-metric">
-          <div class="pw-label">Deductions</div>
-          <div class="pw-value" data-bind="deductions">$2,179.09</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- List -->
-    <h2 class="pw-section-title">Payslips</h2>
-
-    <section class="pw-card pw-list" aria-label="Payslip list" data-bind="list">
-      <!-- injected -->
-    </section>
-  </div>
-
-  <!-- Privacy overlay -->
-  <div class="pw-overlay" aria-hidden="true">
-    <div class="pw-overlay-inner">
-      <div class="pw-overlay-text">
-        <div class="pw-overlay-title">Tap to view</div>
-        <div class="pw-overlay-subtitle">your payslips</div>
-      </div>
-
-      <button class="pw-overlay-btn" type="button" aria-label="View payslips">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
+    <div class="pw-privacy-row">
+      <button class="pw-privacy-toggle" type="button" aria-label="View payslips">
+        <span class="pw-eye" aria-hidden="true">
+          <!-- eye icon -->
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </span>
+        <span class="pw-privacy-text">Tap to view</span>
       </button>
     </div>
+
+    <div class="pw-tabs" role="tablist" aria-label="Payslip months" data-bind="tabs">
+      <!-- injected -->
+    </div>
+
+    <div class="pw-tab-track" aria-hidden="true">
+      <div class="pw-tab-thumb"></div>
+    </div>
+
+    <div class="pw-content">
+      <section class="pw-card pw-summary" aria-label="Payslip summary">
+        <div class="pw-summary-top">
+          <div class="pw-label">Net Pay</div>
+          <div class="pw-net" data-bind="net">0.00</div>
+        </div>
+
+        <div class="pw-summary-bottom">
+          <div class="pw-metric">
+            <div class="pw-label">Gross Pay</div>
+            <div class="pw-value" data-bind="gross">0.00</div>
+          </div>
+
+          <div class="pw-divider" aria-hidden="true"></div>
+
+          <div class="pw-metric">
+            <div class="pw-label">Deductions</div>
+            <div class="pw-value" data-bind="deductions">0.00</div>
+          </div>
+        </div>
+      </section>
+
+      <h2 class="pw-section-title">Payslips</h2>
+
+      <section class="pw-card pw-list" aria-label="Payslip list" data-bind="list">
+        <!-- injected -->
+      </section>
+    </div>
+
+    <!-- Overlay for hidden state -->
+    <div class="pw-overlay" aria-hidden="true">
+      <div class="pw-overlay-inner">
+        <div class="pw-overlay-title">Tap to view your payslips</div>
+        <button class="pw-overlay-btn" type="button" aria-label="View payslips">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
-</div>
 
-<style>
-  .payslips-widget{
-    --bg:#ffffff;
-    --card:#f6f7f8;
-    --card2:#f3f4f6;
-    --text:#0f172a;
-    --muted:#6b7280;
-    --blue:#2f6fb2;
-    --blue-weak:#cfe0f5;
-    --green:#1f7a4a;
-    --border:#e5e7eb;
+  <script>
+    (function () {
+      const widget = document.querySelector(".payslips-widget");
+      if (!widget) return;
 
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-    color: var(--text);
-    max-width: 420px;
-    background: var(--bg);
-    border-radius: 18px;
-    padding: 18px;
-    border: 1px solid #eef0f3;
-    position: relative;
-    overflow: hidden;
-  }
+      const elTabs = widget.querySelector('[data-bind="tabs"]');
+      const elNet = widget.querySelector('[data-bind="net"]');
+      const elGross = widget.querySelector('[data-bind="gross"]');
+      const elDed = widget.querySelector('[data-bind="deductions"]');
+      const elList = widget.querySelector('[data-bind="list"]');
 
-  /* Header */
-  .pw-header{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-  .pw-title{font-size: 38px;line-height:1.05;margin:0;font-weight:800;letter-spacing:-0.02em;}
-  .pw-privacy-toggle{
-    display:flex;align-items:center;gap:10px;
-    border:0;background:transparent;color:#1e4e8c;
-    font-weight:700;font-size:18px;cursor:pointer;
-    padding:10px 12px;border-radius:14px;
-  }
-  .pw-privacy-toggle:hover{background:#f2f6ff;}
-  .pw-eye{
-    width:44px;height:44px;border-radius:999px;
-    background: var(--blue);
-    border: 2px solid #1e4e8c;
-    display:grid;place-items:center;
-    color:#0e3e73;
-  }
+      const toggleBtn = widget.querySelector(".pw-privacy-toggle");
+      const overlayBtn = widget.querySelector(".pw-overlay-btn");
+      const privacyText = widget.querySelector(".pw-privacy-text");
+      const eye = widget.querySelector(".pw-eye");
 
-  /* Tabs */
-  .pw-tabs{
-    display:flex;gap:10px;overflow:auto;
-    padding: 14px 0 8px;
-    scrollbar-width: thin;
-  }
-  .pw-tab{
-    border: 2px solid var(--border);
-    background:#fff;
-    padding: 12px 18px;
-    border-radius: 16px;
-    font-weight:800;
-    font-size:22px;
-    color:#0f172a;
-    white-space:nowrap;
-    cursor:pointer;
-  }
-  .pw-tab.is-active{
-    background: var(--blue-weak);
-    border-color:#1e4e8c;
-    color:#1e4e8c;
-  }
+      // Last 12 months from Jan 2026 backwards
+      // (Each month has one payslip on the 15th for demo purposes.)
+      const months = [
+        { key:"jan2026", label:"January 2026",   net: "4,980.22", gross:"7,150.00", deductions:"2,169.78", payslips:[{date:"15/01/2026", amount:"4,980.22"}] },
+        { key:"dec2025", label:"December 2025",  net: "4,742.10", gross:"6,980.00", deductions:"2,237.90", payslips:[{date:"15/12/2025", amount:"4,742.10"}] },
+        { key:"nov2025", label:"November 2025",  net: "4,615.48", gross:"6,860.00", deductions:"2,244.52", payslips:[{date:"15/11/2025", amount:"4,615.48"}] },
+        { key:"oct2025", label:"October 2025",   net: "4,530.66", gross:"6,780.00", deductions:"2,249.34", payslips:[{date:"15/10/2025", amount:"4,530.66"}] },
+        { key:"sep2025", label:"September 2025", net: "4,402.19", gross:"6,650.00", deductions:"2,247.81", payslips:[{date:"15/09/2025", amount:"4,402.19"}] },
+        { key:"aug2025", label:"August 2025",    net: "4,588.77", gross:"6,820.00", deductions:"2,231.23", payslips:[{date:"15/08/2025", amount:"4,588.77"}] },
+        { key:"jul2025", label:"July 2025",      net: "4,360.05", gross:"6,540.00", deductions:"2,179.95", payslips:[{date:"15/07/2025", amount:"4,360.05"}] },
+        { key:"jun2025", label:"June 2025",      net: "4,440.31", gross:"6,620.00", deductions:"2,179.69", payslips:[{date:"15/06/2025", amount:"4,440.31"}] },
+        { key:"may2025", label:"May 2025",       net: "4,210.92", gross:"6,390.00", deductions:"2,179.08", payslips:[{date:"15/05/2025", amount:"4,210.92"}] },
+        { key:"apr2025", label:"April 2025",     net: "4,320.44", gross:"6,480.00", deductions:"2,159.56", payslips:[{date:"15/04/2025", amount:"4,320.44"}] },
+        { key:"mar2025", label:"March 2025",     net: "4,140.81", gross:"6,225.63", deductions:"2,084.82", payslips:[{date:"15/03/2025", amount:"4,140.81"}] },
+        { key:"feb2025", label:"February 2025",  net: "4,012.19", gross:"6,050.12", deductions:"2,037.93", payslips:[{date:"15/02/2025", amount:"4,012.19"}] }
+      ];
 
-  /* Cards */
-  .pw-card{
-    background: var(--card);
-    border-radius: 22px;
-    padding: 18px;
-    border: 1px solid #eef0f3;
-  }
+      // Turn array into object map
+      const data = months.reduce((acc, m) => (acc[m.key] = m, acc), {});
 
-  /* Summary */
-  .pw-summary{margin-top: 14px;}
-  .pw-summary-top{ text-align:center; padding: 8px 0 16px;}
-  .pw-label{font-size:18px;color:var(--muted);font-weight:700;}
-  .pw-net{font-size:56px;line-height:1;margin-top:10px;color:var(--green);font-weight:900;letter-spacing:-0.02em;}
-  .pw-summary-bottom{
-    display:grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 16px;
-    background: var(--card2);
-    border-radius: 18px;
-    padding: 18px;
-  }
-  .pw-metric{text-align:center;}
-  .pw-value{font-size:32px;font-weight:900;margin-top:8px;}
-  .pw-divider{width:1px;background: #e6e8ee; border-radius:1px;}
-
-  /* Section title */
-  .pw-section-title{
-    font-size: 28px;
-    margin: 18px 0 12px;
-    font-weight: 900;
-    letter-spacing: -0.01em;
-  }
-
-  /* List */
-  .pw-list{padding: 12px 10px;}
-  .pw-row{
-    display:grid;
-    grid-template-columns: 38px 1fr auto 28px;
-    align-items:center;
-    gap: 12px;
-    padding: 16px 12px;
-    text-decoration:none;
-    color: inherit;
-    border-radius: 16px;
-  }
-  .pw-row:hover{background:#ffffff;}
-  .pw-row-divider{height:1px;background:#e7e9ef;margin: 0 14px;}
-  .pw-pdf{
-    width:30px;height:30px;border-radius:8px;
-    display:grid;place-items:center;
-    color:#d86b2d;background:#fff;border:1px solid #f2d1c1;
-  }
-  .pw-date{font-size:24px;font-weight:900;}
-  .pw-amount{font-size:26px;font-weight:900;color:var(--green);}
-  .pw-chevron{color:#6b7280;display:grid;place-items:center;}
-
-  /* Blur state */
-  .payslips-widget[data-state="hidden"] .pw-content{
-    filter: blur(10px);
-    opacity: 0.55;
-    pointer-events: none;
-    user-select: none;
-  }
-
-  /* Overlay */
-  .pw-overlay{
-    position:absolute;inset:0;
-    display:none;
-    padding: 22px;
-  }
-  .payslips-widget[data-state="hidden"] .pw-overlay{
-    display:grid;
-    place-items:center;
-  }
-  .pw-overlay-inner{
-    text-align:center;
-    display:grid;
-    gap: 18px;
-    place-items:center;
-  }
-  .pw-overlay-title{font-size:30px;font-weight:900;letter-spacing:-0.01em;}
-  .pw-overlay-subtitle{font-size:30px;font-weight:900;letter-spacing:-0.01em;margin-top:-6px;}
-  .pw-overlay-btn{
-    width:88px;height:88px;border-radius:999px;
-    background: var(--blue);
-    border: 4px solid #0e3e73;
-    color:#0e3e73;
-    display:grid;place-items:center;
-    cursor:pointer;
-    box-shadow: 0 10px 26px rgba(0,0,0,0.12);
-  }
-  .pw-overlay-btn svg{stroke:#0e3e73;}
-</style>
-
-<script>
-  (function () {
-    const widget = document.currentScript?.previousElementSibling?.previousElementSibling?.previousElementSibling
-      ?.classList?.contains("payslips-widget")
-      ? document.currentScript.previousElementSibling.previousElementSibling.previousElementSibling
-      : document.querySelector(".payslips-widget");
-
-    if (!widget) return;
-
-    const data = {
-      june2020: {
-        net: 5250.91,
-        gross: 7430.00,
-        deductions: 2179.09,
-        payslips: [
-          { date: "30/06/2020", amount: 2625.45 },
-          { date: "15/06/2020", amount: 2625.46 }
-        ]
-      },
-      may2020: {
-        net: 4988.12,
-        gross: 7200.00,
-        deductions: 2211.88,
-        payslips: [
-          { date: "29/05/2020", amount: 2494.06 },
-          { date: "15/05/2020", amount: 2494.06 }
-        ]
-      },
-      apr2020: {
-        net: 5122.40,
-        gross: 7350.00,
-        deductions: 2227.60,
-        payslips: [
-          { date: "30/04/2020", amount: 2561.20 },
-          { date: "15/04/2020", amount: 2561.20 }
-        ]
-      },
-      mar2020: {
-        net: 4760.33,
-        gross: 7000.00,
-        deductions: 2239.67,
-        payslips: [
-          { date: "31/03/2020", amount: 2380.17 },
-          { date: "16/03/2020", amount: 2380.16 }
-        ]
+      function renderTabs(){
+        elTabs.innerHTML = months.map((m, idx) => `
+          <button class="pw-tab ${idx===0 ? "is-active" : ""}"
+                  role="tab"
+                  aria-selected="${idx===0 ? "true" : "false"}"
+                  data-month="${m.key}">
+            ${m.label}
+          </button>
+        `).join("");
       }
-    };
 
-    const bind = {
-      net: widget.querySelector('[data-bind="net"]'),
-      gross: widget.querySelector('[data-bind="gross"]'),
-      deductions: widget.querySelector('[data-bind="deductions"]'),
-      list: widget.querySelector('[data-bind="list"]')
-    };
+      function renderList(items){
+        elList.innerHTML = items.map((p) => `
+          <a class="pw-row" href="javascript:void(0)">
+            <span class="pw-pdf" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <path d="M14 2v6h6"></path>
+                <path d="M8 13h3"></path>
+                <path d="M8 17h8"></path>
+              </svg>
+            </span>
 
-    const tabs = Array.from(widget.querySelectorAll(".pw-tab"));
-    const toggleBtn = widget.querySelector(".pw-privacy-toggle");
-    const overlayBtn = widget.querySelector(".pw-overlay-btn");
-    const overlay = widget.querySelector(".pw-overlay");
-    const privacyText = widget.querySelector(".pw-privacy-text");
-    const eye = widget.querySelector(".pw-eye");
+            <span class="pw-date">${p.date}</span>
+            <span class="pw-amount">${p.amount}</span>
 
-    const fmt = (n) =>
-      n.toLocaleString(undefined, { style: "currency", currency: "USD" });
-
-    function renderMonth(key) {
-      const m = data[key];
-      if (!m) return;
-
-      if (bind.net) bind.net.textContent = fmt(m.net);
-      if (bind.gross) bind.gross.textContent = fmt(m.gross);
-      if (bind.deductions) bind.deductions.textContent = fmt(m.deductions);
-
-      if (bind.list) {
-        bind.list.innerHTML = m.payslips
-          .map((p, idx) => `
-            <a class="pw-row" href="javascript:void(0)">
-              <span class="pw-pdf" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <path d="M14 2v6h6"></path>
-                  <path d="M8 13h3"></path>
-                  <path d="M8 17h8"></path>
-                </svg>
-              </span>
-              <span class="pw-date">${p.date}</span>
-              <span class="pw-amount">${fmt(p.amount)}</span>
-              <span class="pw-chevron" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 18l6-6-6-6"></path>
-                </svg>
-              </span>
-            </a>
-            ${idx < m.payslips.length - 1 ? '<div class="pw-row-divider" aria-hidden="true"></div>' : ''}
-          `)
-          .join("");
+            <span class="pw-chevron" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18l6-6-6-6"></path>
+              </svg>
+            </span>
+          </a>
+        `).join("");
       }
-    }
 
-    function setActiveTab(nextKey) {
-      tabs.forEach((t) => {
-        const on = t.dataset.month === nextKey;
-        t.classList.toggle("is-active", on);
-        t.setAttribute("aria-selected", on ? "true" : "false");
-      });
-      renderMonth(nextKey);
-    }
-
-    function setState(next) {
-      widget.setAttribute("data-state", next);
-      const hidden = next === "hidden";
-
-      if (privacyText) privacyText.textContent = hidden ? "Tap to view" : "Tap to hide";
-      if (toggleBtn) toggleBtn.setAttribute("aria-label", hidden ? "View payslips" : "Hide payslips");
-
-      if (eye) {
-        eye.style.background = hidden ? "var(--blue)" : "var(--blue-weak)";
+      function renderMonth(key){
+        const m = data[key];
+        if (!m) return;
+        elNet.textContent = m.net;
+        elGross.textContent = m.gross;
+        elDed.textContent = m.deductions;
+        renderList(m.payslips || []);
       }
-    }
 
-    function togglePrivacy() {
-      const curr = widget.getAttribute("data-state") || "hidden";
-      setState(curr === "hidden" ? "visible" : "hidden");
-    }
+      function setActiveTab(key){
+        const tabs = Array.from(widget.querySelectorAll(".pw-tab"));
+        tabs.forEach(t => {
+          const on = t.dataset.month === key;
+          t.classList.toggle("is-active", on);
+          t.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        renderMonth(key);
+      }
 
-    // Events
-    tabs.forEach((t) => {
-      t.addEventListener("click", () => setActiveTab(t.dataset.month));
-    });
+      function setState(next){
+        widget.setAttribute("data-state", next);
+        const hidden = next === "hidden";
 
-    toggleBtn?.addEventListener("click", togglePrivacy);
-    overlayBtn?.addEventListener("click", togglePrivacy);
-    overlay?.addEventListener("click", (e) => {
-      if (e.target === overlay) togglePrivacy();
-    });
+        privacyText.textContent = hidden ? "Tap to view" : "Tap to hide";
+        toggleBtn.setAttribute("aria-label", hidden ? "View payslips" : "Hide payslips");
 
-    // Init: start hidden + load active month (June)
-    setState("hidden");
-    setActiveTab("june2020");
-  })();
-</script>
+        // swap icon eye / eye-off
+        eye.innerHTML = hidden
+          ? `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+               <circle cx="12" cy="12" r="3"></circle>
+             </svg>`
+          : `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+               <path d="M3 3l18 18"></path>
+               <path d="M10.58 10.58A3 3 0 0 0 12 15a3 3 0 0 0 2.42-4.42"></path>
+               <path d="M9.88 5.09A10.43 10.43 0 0 1 12 4c7 0 10 8 10 8a18.35 18.35 0 0 1-3.07 4.35"></path>
+               <path d="M6.61 6.61A18.35 18.35 0 0 0 2 12s3 8 10 8a10.45 10.45 0 0 0 4.34-.93"></path>
+             </svg>`;
+      }
+
+      function togglePrivacy(){
+        const curr = widget.getAttribute("data-state") || "hidden";
+        setState(curr === "hidden" ? "visible" : "hidden");
+      }
+
+      function bindTabClicks(){
+        const tabs = Array.from(widget.querySelectorAll(".pw-tab"));
+        tabs.forEach(t => t.addEventListener("click", () => setActiveTab(t.dataset.month)));
+      }
+
+      // Init
+      renderTabs();
+      bindTabClicks();
+      setState("hidden");
+      setActiveTab(months[0].key);
+
+      toggleBtn.addEventListener("click", togglePrivacy);
+      overlayBtn.addEventListener("click", togglePrivacy);
+    })();
+  </script>
+</body>
+</html>
