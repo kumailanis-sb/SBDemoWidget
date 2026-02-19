@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Team Appointments</title>
+
+<style>
+:root{
+  --primary:#1AB3B4;
+  --dark:#264544;
+  --light:#F3F3F3;
+  --white:#FFFFFF;
+  --border:#e6e6e6;
+
+  --shadow: 0 10px 35px rgba(0,0,0,0.10);
+  --shadow2: 0 18px 60px rgba(0,0,0,0.18);
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--light);
+  color:var(--dark);
+  padding:20px;
+}
+
+.wrapper{max-width:1200px;margin:auto;}
+.shell{
+  background:var(--white);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+/* HEADER */
+.header{
+  background:var(--dark);
+  color:var(--white);
+  padding:18px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:14px;
+}
+.header h1{
+  margin:0;
+  font-size:18px;
+  font-weight:650;
+  letter-spacing: 0.2px;
+}
+.header .sub{
+  margin:4px 0 0;
+  font-size:12px;
+  opacity:0.85;
+}
+.titleblock{display:flex;flex-direction:column;}
+.controls{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+button{
+  border:none;
+  padding:9px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:600;
+  background:var(--primary);
+  color:var(--white);
+  transition:0.18s ease;
+  box-shadow: 0 6px 18px rgba(26,179,180,0.22);
+}
+button.secondary{
+  background:rgba(255,255,255,0.16);
+  box-shadow:none;
+}
+button.ghost{
+  background:transparent;
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow:none;
+}
+button:hover{transform:translateY(-1px);opacity:0.95;}
+button:active{transform:translateY(0px);opacity:0.9;}
+
+select, input{
+  padding:9px 10px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  font-size:13px;
+  outline:none;
+  background: var(--white);
+}
+input{min-width: 220px;}
+
+/* WEEK BAR */
+.weekbar{
+  padding:14px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+  background:#f9f9f9;
+  border-bottom:1px solid var(--border);
+}
+.weekbar .range{
+  font-weight:700;
+  letter-spacing:0.2px;
+}
+.weekbar .meta{
+  font-size:12px;
+  color: rgba(38,69,68,0.75);
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:12px;
+  padding:18px;
+  overflow:auto;
+}
+.grid::-webkit-scrollbar{height:10px;width:10px;}
+.grid::-webkit-scrollbar-thumb{background:rgba(38,69,68,0.20);border-radius:99px;}
+.grid::-webkit-scrollbar-track{background:rgba(38,69,68,0.08);border-radius:99px;}
+
+.day{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:16px;
+  display:flex;
+  flex-direction:column;
+  min-height:300px;
+  overflow:hidden;
+}
+.dayhead{
+  padding:12px;
+  border-bottom:1px solid var(--border);
+  background: linear-gradient(180deg, rgba(26,179,180,0.12), rgba(26,179,180,0.05));
+}
+.dayhead .top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+}
+.dayhead .dow{
+  font-size:12px;
+  text-transform:uppercase;
+  color:var(--primary);
+  font-weight:750;
+  letter-spacing:0.4px;
+}
+.dayhead .date{
+  font-weight:750;
+  font-size:13px;
+  margin-top:2px;
+}
+.dayhead .count{
+  font-size:12px;
+  font-weight:700;
+  padding:6px 9px;
+  border-radius:999px;
+  border:1px solid rgba(26,179,180,0.35);
+  background: rgba(26,179,180,0.10);
+  color: var(--dark);
+  white-space:nowrap;
+}
+
+.list{
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.appt{
+  border:1px solid var(--border);
+  border-left:5px solid var(--primary);
+  border-radius:12px;
+  padding:10px 10px;
+  background:#fbfbfb;
+  font-size:13px;
+  cursor:pointer;
+  transition: 0.15s ease;
+  position:relative;
+}
+.appt:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  background: #ffffff;
+}
+.appt:active{transform: translateY(0px);}
+
+.appt .row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+.appt .time{
+  font-weight:800;
+  font-size:12px;
+  color:var(--primary);
+  letter-spacing:0.2px;
+}
+.badge{
+  font-size:11px;
+  font-weight:800;
+  border-radius:999px;
+  padding:6px 8px;
+  border:1px solid rgba(38,69,68,0.14);
+  background: rgba(38,69,68,0.06);
+  color: rgba(38,69,68,0.85);
+  white-space:nowrap;
+}
+.badge.confirmed{border-color: rgba(26,179,180,0.35); background: rgba(26,179,180,0.10);}
+.badge.pending{border-color: rgba(255,171,0,0.35); background: rgba(255,171,0,0.12);}
+.badge.cancelled{border-color: rgba(220,38,38,0.35); background: rgba(220,38,38,0.10); color: rgba(220,38,38,0.9);}
+
+.appt .customer{
+  font-weight:800;
+  margin-top:4px;
+}
+.appt .reason{
+  font-size:12px;
+  color: rgba(38,69,68,0.76);
+  margin-top:3px;
+  line-height:1.25;
+}
+.appt .meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:8px;
+}
+.pill{
+  font-size:11px;
+  border:1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.03);
+  padding:5px 8px;
+  border-radius:999px;
+  color: rgba(38,69,68,0.82);
+}
+
+.empty{
+  font-size:12px;
+  color: rgba(38,69,68,0.55);
+  padding:10px;
+  border: 1px dashed rgba(38,69,68,0.18);
+  border-radius: 12px;
+  background: rgba(38,69,68,0.03);
+}
+
+/* DRAWER (details) */
+.backdrop{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,0.25);
+  opacity:0;
+  pointer-events:none;
+  transition:0.18s ease;
+}
+.backdrop.open{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.drawer{
+  position:fixed;
+  top:0;
+  right:0;
+  height:100%;
+  width: min(520px, 92vw);
+  background: var(--white);
+  box-shadow: var(--shadow2);
+  transform: translateX(105%);
+  transition: 0.22s ease;
+  display:flex;
+  flex-direction:column;
+  border-left: 1px solid rgba(0,0,0,0.06);
+}
+.drawer.open{ transform: translateX(0); }
+
+.drawerHeader{
+  padding:16px 16px 12px;
+  background: linear-gradient(180deg, rgba(26,179,180,0.12), rgba(26,179,180,0.04));
+  border-bottom: 1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+.drawerHeader .hgroup{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.drawerHeader .hgroup .title{
+  font-weight:900;
+  letter-spacing:0.2px;
+}
+.drawerHeader .hgroup .subtitle{
+  font-size:12px;
+  color: rgba(38,69,68,0.72);
+}
+.drawerHeader .actions{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+}
+.iconBtn{
+  background: transparent;
+  border: 1px solid rgba(38,69,68,0.16);
+  color: var(--dark);
+  padding:8px 10px;
+  border-radius:10px;
+  box-shadow:none;
+}
+.iconBtn:hover{ background: rgba(38,69,68,0.04); transform: translateY(-1px); }
+.iconBtn:active{ transform: translateY(0); }
+
+.drawerBody{
+  padding:14px 16px 18px;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.section{
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+}
+.section h3{
+  margin:0 0 10px;
+  font-size:13px;
+  letter-spacing:0.2px;
+}
+.kv{
+  display:grid;
+  grid-template-columns: 140px 1fr;
+  gap:10px 12px;
+  align-items:start;
+  font-size:13px;
+}
+.kv .k{
+  color: rgba(38,69,68,0.70);
+  font-weight:700;
+}
+.kv .v{
+  color: rgba(38,69,68,0.92);
+  font-weight:650;
+  line-height:1.35;
+}
+.note{
+  font-size:12px;
+  color: rgba(38,69,68,0.70);
+  line-height:1.35;
+}
+textarea{
+  width:100%;
+  min-height: 180px;
+  resize: vertical;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+  font-size: 12px;
+  outline:none;
+  background: #fbfbfb;
+}
+
+/* responsive */
+@media(max-width:1050px){
+  .grid{ grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:720px){
+  body{ padding: 12px; }
+  .grid{ grid-template-columns: repeat(2, 1fr); }
+  input{ min-width: 180px; }
+}
+@media(max-width:520px){
+  .grid{ grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+<div class="wrapper">
+  <div class="shell">
+
+    <div class="header">
+      <div class="titleblock">
+        <h1>Weekly Team Appointments</h1>
+        <div class="sub">Click an appointment to view details.</div>
+      </div>
+
+      <div class="controls">
+        <button class="secondary" type="button" onclick="changeWeek(-7)">Prev</button>
+        <button type="button" onclick="resetWeek()">This Week</button>
+        <button class="secondary" type="button" onclick="changeWeek(7)">Next</button>
+
+        <select id="memberFilter" aria-label="Filter by team member"></select>
+        <input type="text" id="searchInput" placeholder="Search customer / reason / notes…" aria-label="Search" />
+      </div>
+    </div>
+
+    <div class="weekbar">
+      <div class="range" id="weekRange"></div>
+      <div class="meta" id="summary"></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<!-- Drawer + backdrop -->
+<div class="backdrop" id="backdrop" onclick="closeDrawer()"></div>
+
+<aside class="drawer" id="drawer" aria-label="Appointment details" aria-hidden="true">
+  <div class="drawerHeader">
+    <div class="hgroup">
+      <div class="title" id="dTitle">Appointment</div>
+      <div class="subtitle" id="dSubtitle">—</div>
+    </div>
+    <div class="actions">
+      <button class="iconBtn" type="button" id="copyBtn" title="Copy appointment JSON">Copy</button>
+      <button class="iconBtn" type="button" onclick="closeDrawer()" title="Close">Close</button>
+    </div>
+  </div>
+
+  <div class="drawerBody">
+    <div class="section">
+      <h3>Details</h3>
+      <div class="kv">
+        <div class="k">Customer</div><div class="v" id="dCustomer">—</div>
+        <div class="k">Team member</div><div class="v" id="dMember">—</div>
+        <div class="k">Time</div><div class="v" id="dTime">—</div>
+        <div class="k">Status</div><div class="v" id="dStatus">—</div>
+        <div class="k">Reason</div><div class="v" id="dReason">—</div>
+        <div class="k">Location</div><div class="v" id="dLocation">—</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Notes</h3>
+      <div class="note" id="dNotes">—</div>
+    </div>
+
+    <div class="section">
+      <h3>Quick edit (JSON)</h3>
+      <div class="note" style="margin-bottom:10px;">
+        For demo/testing: update the JSON and click <b>Save changes</b> to modify the appointment in-memory.
+      </div>
+      <textarea id="jsonEditor"></textarea>
+      <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <button type="button" onclick="saveFromJson()">Save changes</button>
+        <button type="button" class="secondary" onclick="resetEditor()">Reset</button>
+        <button type="button" class="ghost" onclick="deleteAppointment()">Delete</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<script>
+/**
+ * Weekly appointments viewer with clickable detail drawer.
+ * Data is stored in APPOINTMENTS array. Replace with your real feed/API later.
+ */
+
+const TEAM = [
+  {id:"all",name:"All team members"},
+  {id:"mia",name:"Mia"},
+  {id:"alex",name:"Alex"},
+  {id:"sarah",name:"Sarah"},
+  {id:"josh",name:"Josh"},
+  {id:"amelia",name:"Amelia"}
+];
+
+// More appointments across the week (sample)
+let APPOINTMENTS = [
+  // Mon
+  mk("apt-2001","2026-02-16T09:00","2026-02-16T09:30","mia","Priya S.","Pram fit check","Baby Bunting (Alexandria)","confirmed","Wants lightweight travel pram under $500."),
+  mk("apt-2002","2026-02-16T10:00","2026-02-16T10:30","alex","Daniel K.","Car seat installation help","Baby Bunting (Alexandria)","pending","First baby due next month. Needs ISOFIX guidance."),
+  mk("apt-2003","2026-02-16T12:00","2026-02-16T12:45","sarah","Emma L.","Nursery planning consult","Baby Bunting (Alexandria)","confirmed","Looking for cot + dresser + monitor."),
+  mk("apt-2004","2026-02-16T15:30","2026-02-16T16:00","amelia","Hannah P.","Feeding essentials checklist","Baby Bunting (Alexandria)","confirmed","Budget options + bottle warmer."),
+  // Tue
+  mk("apt-2005","2026-02-17T09:15","2026-02-17T09:45","josh","Walk-in","Returns & exchange support","Baby Bunting (Alexandria)","confirmed","Return pram accessory. Exchange size."),
+  mk("apt-2006","2026-02-17T11:00","2026-02-17T11:30","alex","Sana A.","Breast pump comparison","Baby Bunting (Alexandria)","cancelled","Cancelled same day."),
+  mk("apt-2007","2026-02-17T13:00","2026-02-17T13:45","mia","Chris T.","Pram + capsule bundle advice","Baby Bunting (Alexandria)","pending","Needs something compact for small car boot."),
+  mk("apt-2008","2026-02-17T16:00","2026-02-17T16:30","sarah","Olivia M.","Sleep & swaddle consult","Baby Bunting (Alexandria)","confirmed","Prefers breathable fabrics."),
+  // Wed
+  mk("apt-2009","2026-02-18T09:00","2026-02-18T09:30","amelia","Jasmin R.","Gift registry setup","Baby Bunting (Alexandria)","confirmed","Wants list shareable with family."),
+  mk("apt-2010","2026-02-18T10:30","2026-02-18T11:00","alex","Nathan B.","Car seat upgrade (toddler)","Baby Bunting (Alexandria)","confirmed","Compare 0–4 seats; safety features."),
+  mk("apt-2011","2026-02-18T12:15","2026-02-18T12:45","josh","Mariam S.","Nappy bag + travel essentials","Baby Bunting (Alexandria)","pending","Shortlisted 2 bags; wants pros/cons."),
+  mk("apt-2012","2026-02-18T15:00","2026-02-18T15:30","sarah","Alyssa R.","Feeding starter kit","Baby Bunting (Alexandria)","confirmed","Needs bottles + steriliser; mid-range."),
+  // Thu
+  mk("apt-2013","2026-02-19T09:45","2026-02-19T10:15","mia","Jordan P.","Registry follow-up","Baby Bunting (Alexandria)","confirmed","Adding high chair + monitor."),
+  mk("apt-2014","2026-02-19T11:30","2026-02-19T12:00","alex","Ben W.","Pram accessories","Baby Bunting (Alexandria)","confirmed","Cup holder + rain cover compatibility."),
+  mk("apt-2015","2026-02-19T14:00","2026-02-19T14:45","amelia","Sophie Q.","Nursery furniture measurements","Baby Bunting (Alexandria)","pending","Wants help fitting into small room."),
+  mk("apt-2016","2026-02-19T16:15","2026-02-19T16:45","josh","Walk-in","Click & Collect pickup","Baby Bunting (Alexandria)","confirmed","Assist with product handover."),
+  // Fri
+  mk("apt-2017","2026-02-20T09:00","2026-02-20T09:30","sarah","Ibrahim H.","Newborn essentials list","Baby Bunting (Alexandria)","confirmed","Wants checklist for first 2 weeks."),
+  mk("apt-2018","2026-02-20T10:45","2026-02-20T11:15","alex","Grace D.","Car seat install check","Baby Bunting (Alexandria)","pending","Booked after online purchase."),
+  mk("apt-2019","2026-02-20T13:30","2026-02-20T14:00","mia","Wei C.","Pram test drive","Baby Bunting (Alexandria)","confirmed","Try 3 prams on uneven surfaces."),
+  mk("apt-2020","2026-02-20T15:00","2026-02-20T15:30","amelia","Tanya V.","Breastfeeding support products","Baby Bunting (Alexandria)","confirmed","Nipple shields + creams guidance."),
+  // Sat
+  mk("apt-2021","2026-02-21T10:00","2026-02-21T10:30","josh","Walk-in","Returns queue support","Baby Bunting (Alexandria)","pending","Busy Saturday coverage."),
+  mk("apt-2022","2026-02-21T11:15","2026-02-21T12:00","sarah","Luca F.","Travel pram shortlist","Baby Bunting (Alexandria)","confirmed","Compare cabin-friendly options."),
+  mk("apt-2023","2026-02-21T14:00","2026-02-21T14:30","alex","Harper N.","Monitor & camera setup","Baby Bunting (Alexandria)","confirmed","Wants Wi-Fi vs non Wi-Fi comparison."),
+  // Sun
+  mk("apt-2024","2026-02-22T11:00","2026-02-22T11:30","mia","Sam R.","Change mat + bath time","Baby Bunting (Alexandria)","confirmed","Small apartment, needs compact items.")
+];
+
+function mk(id,start,end,memberId,customer,reason,location,status,notes){
+  const memberName = TEAM.find(t=>t.id===memberId)?.name || memberId;
+  return { id, start, end, memberId, memberName, customer, reason, location, status, notes };
+}
+
+// --- State ---
+let weekStart = getMonday(new Date());
+let filter="all";
+let search="";
+
+let selectedApptId = null;
+
+// --- Date helpers ---
+function getMonday(d){
+  const date = new Date(d);
+  const day = (date.getDay()+6)%7; // Monday=0
+  date.setDate(date.getDate()-day);
+  date.setHours(0,0,0,0);
+  return date;
+}
+function changeWeek(days){ weekStart = new Date(weekStart); weekStart.setDate(weekStart.getDate()+days); render(); }
+function resetWeek(){ weekStart = getMonday(new Date()); render(); }
+
+function formatDate(d){
+  return d.toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"});
+}
+function formatShort(d){
+  return d.toLocaleDateString("en-AU",{day:"numeric",month:"short"});
+}
+function dowShort(d){ return d.toLocaleDateString("en-AU",{weekday:"short"}); }
+
+function toLocalDate(iso){
+  const [datePart,timePart]=iso.split("T");
+  const [y,m,da]=datePart.split("-").map(Number);
+  const [hh,mm]=timePart.split(":").map(Number);
+  return new Date(y,m-1,da,hh,mm,0,0);
+}
+function isInWeek(appt, start){
+  const s = toLocalDate(appt.start);
+  const end = new Date(start); end.setDate(end.getDate()+7);
+  return s>=start && s<end;
+}
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function statusLabel(status){
+  if(status==="confirmed") return {t:"Confirmed", cls:"confirmed"};
+  if(status==="pending") return {t:"Pending", cls:"pending"};
+  if(status==="cancelled") return {t:"Cancelled", cls:"cancelled"};
+  return {t:"Other", cls:""};
+}
+
+// --- Drawer ---
+function openDrawer(apptId){
+  const appt = APPOINTMENTS.find(a=>a.id===apptId);
+  if(!appt) return;
+
+  selectedApptId = apptId;
+
+  const s = toLocalDate(appt.start);
+  const e = toLocalDate(appt.end);
+  const st = statusLabel(appt.status);
+
+  document.getElementById("dTitle").textContent = appt.customer || "Appointment";
+  document.getElementById("dSubtitle").textContent = `${dowShort(s)} • ${formatDate(s)} • ${s.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"})} – ${e.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"})}`;
+
+  document.getElementById("dCustomer").textContent = appt.customer || "—";
+  document.getElementById("dMember").textContent = appt.memberName || "—";
+  document.getElementById("dTime").textContent = `${formatDate(s)} • ${s.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"})} – ${e.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"})}`;
+  document.getElementById("dStatus").textContent = st.t;
+  document.getElementById("dReason").textContent = appt.reason || "—";
+  document.getElementById("dLocation").textContent = appt.location || "—";
+  document.getElementById("dNotes").textContent = appt.notes || "—";
+
+  document.getElementById("jsonEditor").value = JSON.stringify(appt, null, 2);
+
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("backdrop").classList.add("open");
+  document.getElementById("drawer").setAttribute("aria-hidden","false");
+}
+
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("backdrop").classList.remove("open");
+  document.getElementById("drawer").setAttribute("aria-hidden","true");
+  selectedApptId = null;
+}
+
+function resetEditor(){
+  if(!selectedApptId) return;
+  const appt = APPOINTMENTS.find(a=>a.id===selectedApptId);
+  document.getElementById("jsonEditor").value = JSON.stringify(appt, null, 2);
+}
+
+function saveFromJson(){
+  if(!selectedApptId) return;
+
+  const txt = document.getElementById("jsonEditor").value;
+  try{
+    const updated = JSON.parse(txt);
+
+    // basic guardrails so it doesn't break rendering
+    if(!updated.id) updated.id = selectedApptId;
+    if(!updated.start || !updated.end) throw new Error("start/end required");
+    if(!updated.memberId) updated.memberId = "mia";
+
+    updated.memberName = TEAM.find(t=>t.id===updated.memberId)?.name || updated.memberId;
+
+    APPOINTMENTS = APPOINTMENTS.map(a => a.id===selectedApptId ? updated : a);
+
+    openDrawer(updated.id); // re-render drawer with latest
+    render();
+  } catch(err){
+    alert("Invalid JSON or missing required fields (start/end).");
+  }
+}
+
+function deleteAppointment(){
+  if(!selectedApptId) return;
+  const ok = confirm("Delete this appointment?");
+  if(!ok) return;
+  APPOINTMENTS = APPOINTMENTS.filter(a => a.id !== selectedApptId);
+  closeDrawer();
+  render();
+}
+
+// Copy JSON button
+document.getElementById("copyBtn").addEventListener("click", async () => {
+  const txt = document.getElementById("jsonEditor").value || "";
+  try{
+    await navigator.clipboard.writeText(txt);
+    document.getElementById("copyBtn").textContent = "Copied";
+    setTimeout(()=>document.getElementById("copyBtn").textContent="Copy", 900);
+  }catch{
+    // fallback
+    alert("Copy failed (browser/iframe restrictions). Select and copy manually.");
+  }
+});
+
+// Esc closes drawer
+document.addEventListener("keydown", (e)=>{
+  if(e.key==="Escape") closeDrawer();
+});
+
+// --- Render ---
+function render(){
+  const grid = document.getElementById("grid");
+  grid.innerHTML="";
+
+  const end = new Date(weekStart); end.setDate(end.getDate()+6);
+  document.getElementById("weekRange").innerText = `${formatShort(weekStart)} – ${formatShort(end)} (${weekStart.getFullYear()})`;
+
+  // Filter + search
+  const weekAppts = APPOINTMENTS
+    .filter(a => isInWeek(a, weekStart))
+    .filter(a => filter==="all" ? true : a.memberId===filter)
+    .filter(a => {
+      if(!search) return true;
+      const hay = `${a.customer} ${a.reason} ${a.location} ${a.notes} ${a.memberName} ${a.status}`.toLowerCase();
+      return hay.includes(search);
+    })
+    .sort((a,b)=>toLocalDate(a.start)-toLocalDate(b.start));
+
+  const total = weekAppts.length;
+  const memberCount = new Set(weekAppts.map(a=>a.memberId)).size;
+
+  document.getElementById("summary").innerText =
+    `${total} appointment${total!==1?"s":""} • ${memberCount} team member${memberCount!==1?"s":""} shown`;
+
+  // group by day YYYY-MM-DD
+  const byDay = new Map();
+  for(let i=0;i<7;i++){
+    const d=new Date(weekStart); d.setDate(d.getDate()+i);
+    const key=d.toISOString().split("T")[0];
+    byDay.set(key, []);
+  }
+  for(const a of weekAppts){
+    const key = a.start.split("T")[0];
+    if(!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key).push(a);
+  }
+
+  for(let i=0;i<7;i++){
+    const day = new Date(weekStart); day.setDate(day.getDate()+i);
+    const key = day.toISOString().split("T")[0];
+    const list = byDay.get(key) || [];
+
+    const col = document.createElement("div");
+    col.className="day";
+
+    const head = document.createElement("div");
+    head.className="dayhead";
+    head.innerHTML = `
+      <div class="top">
+        <div>
+          <div class="dow">${dowShort(day)}</div>
+          <div class="date">${formatShort(day)}</div>
+        </div>
+        <div class="count">${list.length}</div>
+      </div>
+    `;
+    col.appendChild(head);
+
+    const body = document.createElement("div");
+    body.className="list";
+
+    if(list.length===0){
+      const empty=document.createElement("div");
+      empty.className="empty";
+      empty.textContent="No appointments";
+      body.appendChild(empty);
+    } else {
+      for(const a of list){
+        const st = statusLabel(a.status);
+        const s = toLocalDate(a.start);
+        const e = toLocalDate(a.end);
+
+        const card = document.createElement("div");
+        card.className="appt";
+        card.setAttribute("role","button");
+        card.setAttribute("tabindex","0");
+        card.setAttribute("aria-label",`Open appointment for ${a.customer}`);
+        card.onclick = ()=>openDrawer(a.id);
+        card.onkeydown = (ev)=>{ if(ev.key==="Enter"||ev.key===" ") openDrawer(a.id); };
+
+        card.innerHTML = `
+          <div class="row">
+            <div class="time">${s.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"})}–${e.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"})}</div>
+            <div class="badge ${st.cls}">${st.t}</div>
+          </div>
+          <div class="customer">${escapeHtml(a.customer)}</div>
+          <div class="reason">${escapeHtml(a.reason)}</div>
+          <div class="meta">
+            <span class="pill">👤 ${escapeHtml(a.memberName)}</span>
+            <span class="pill">📍 ${escapeHtml(a.location)}</span>
+          </div>
+        `;
+        body.appendChild(card);
+      }
+    }
+
+    col.appendChild(body);
+    grid.appendChild(col);
+  }
+}
+
+// --- Init controls ---
+document.getElementById("memberFilter").innerHTML =
+  TEAM.map(t=>`<option value="${t.id}">${t.name}</option>`).join("");
+
+document.getElementById("memberFilter").onchange = (e)=>{
+  filter = e.target.value;
+  render();
+};
+
+document.getElementById("searchInput").oninput = (e)=>{
+  search = (e.target.value||"").toLowerCase().trim();
+  render();
+};
+
+// Start on the week that has sample data if current week doesn't match
+// (optional convenience)
+const sampleWeek = getMonday(toLocalDate(APPOINTMENTS[0].start));
+weekStart = sampleWeek;
+
+render();
+</script>
+</body>
+</html>
