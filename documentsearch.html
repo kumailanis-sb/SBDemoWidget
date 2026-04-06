@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Policy Search</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #ffffff;
+      color: #333;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 10px 14px 30px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .reset-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: #444;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .reset-link:hover { text-decoration: underline; }
+
+    .reset-icon {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #222;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .search-btn {
+      background: #f2b300;
+      border: 1px solid #d19a00;
+      color: #222;
+      font-size: 14px;
+      padding: 7px 16px;
+      cursor: pointer;
+    }
+
+    .search-btn:hover { background: #e2a800; }
+
+    .form-wrap {
+      background: #edf0f2;
+      padding: 6px 10px 20px;
+      border: 1px solid #e2e2e2;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      row-gap: 12px;
+      column-gap: 14px;
+      align-items: center;
+      max-width: 1150px;
+    }
+
+    label {
+      text-align: right;
+      font-size: 14px;
+      color: #444;
+      white-space: nowrap;
+    }
+
+    input, select {
+      width: 100%;
+      height: 30px;
+      border: 1px solid #cfcfcf;
+      background: #fff;
+      padding: 4px 10px;
+      font-size: 14px;
+    }
+
+    .results {
+      margin-top: 22px;
+      padding: 18px;
+      border: 1px solid #e2e2e2;
+      background: #fff;
+      display: none;
+    }
+
+    .results.active { display: block; }
+
+    .policy-list li {
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      label { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="form-wrap">
+      <div class="top-bar">
+        <a href="#" class="reset-link" id="resetBtn">
+          <span class="reset-icon">×</span>
+          <span>Reset</span>
+        </a>
+
+        <button class="search-btn" id="searchBtn">Search</button>
+      </div>
+
+      <form id="policyForm">
+        <div class="form-grid">
+
+          <label>Title</label>
+          <input type="text" />
+
+          <label>Document Type</label>
+          <select>
+            <option value="">Select document type</option>
+            <option>Policy</option>
+            <option>Procedure</option>
+            <option>Guideline</option>
+            <option>Standard</option>
+            <option>Form</option>
+          </select>
+
+          <!-- UPDATED SITE DROPDOWN -->
+          <label>Site</label>
+          <select>
+            <option value="">Select site</option>
+            <option>St. Luke’s Medical Center – Quezon City</option>
+            <option>St. Luke’s Medical Center – Global City (BGC)</option>
+            <option>St. Luke’s Cancer Institute</option>
+            <option>St. Luke’s Institute of Digestive & Liver Diseases</option>
+            <option>St. Luke’s Heart Institute</option>
+            <option>St. Luke’s Administrative Offices</option>
+            <option>All Sites</option>
+          </select>
+
+          <label>Keyword</label>
+          <input type="text" />
+
+          <label>Originating Group</label>
+          <select>
+            <option value="">Select originating group</option>
+            <option>Human Resources</option>
+            <option>Information Technology</option>
+            <option>Finance</option>
+            <option>Legal & Compliance</option>
+            <option>Operations</option>
+            <option>Health & Safety</option>
+          </select>
+
+          <label>Originating Department/Unit</label>
+          <select>
+            <option value="">Select department/unit</option>
+            <option>People & Culture</option>
+            <option>Cybersecurity</option>
+            <option>Risk & Governance</option>
+            <option>Facilities Management</option>
+            <option>Procurement</option>
+            <option>Clinical Operations</option>
+          </select>
+
+        </div>
+      </form>
+    </div>
+
+    <div class="results" id="results">
+      <h3>Example Policies Available</h3>
+      <ol class="policy-list">
+        <li>Code of Conduct Policy</li>
+        <li>Patient Safety and Quality Policy</li>
+        <li>Information Security Policy</li>
+        <li>Infection Prevention and Control Policy</li>
+        <li>Data Privacy Policy</li>
+        <li>Emergency Response Procedure</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("policyForm");
+    const resetBtn = document.getElementById("resetBtn");
+    const searchBtn = document.getElementById("searchBtn");
+    const results = document.getElementById("results");
+
+    resetBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      form.reset();
+      results.classList.remove("active");
+    });
+
+    searchBtn.addEventListener("click", function () {
+      results.classList.add("active");
+    });
+  </script>
+</body>
+</html>
