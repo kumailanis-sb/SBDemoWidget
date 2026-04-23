@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="widget-name" content="Salesforce Tile - Deals at Risk">
+	<title>Top Deals at Risk</title>
+	<style>
+		:root { --primary: var(--sb-brand, #2563eb); --text: #111827; --muted: #6b7280; --bg: #f3f6fb; --surface: #ffffff; --border: #dbe3ef; --shadow: 0 18px 42px rgba(15, 23, 42, 0.08); --high: #ef4444; --medium: #f59e0b; --low: #8b5cf6; }
+		@media (prefers-color-scheme: dark) { :root { --primary: var(--sb-brand, #60a5fa); --text: #f8fafc; --muted: #94a3b8; --bg: #0f172a; --surface: #111c31; --border: #24324a; --shadow: 0 18px 42px rgba(2, 6, 23, 0.35); } }
+		* { box-sizing: border-box; }
+		body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+		.card { max-width: 720px; margin: 0 auto; padding: 22px; border-radius: 24px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
+		.header { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+		h1 { margin: 0; font-size: 22px; }
+		.updated { margin-top: 8px; color: var(--muted); font-size: 13px; font-weight: 600; }
+		.controls { display: flex; gap: 10px; flex-wrap: wrap; }
+		select { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font: inherit; background: transparent; color: inherit; }
+		.list { display: grid; gap: 16px; margin-top: 18px; }
+		.item { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
+		.avatar { width: 46px; height: 46px; border-radius: 999px; display: grid; place-items: center; font-weight: 800; border: 2px solid currentColor; background: color-mix(in srgb, currentColor 12%, transparent); }
+		.details strong { display: block; font-size: 16px; margin-bottom: 4px; }
+		.details span { color: var(--muted); font-size: 14px; }
+		.amount { text-align: right; font-weight: 800; }
+		.pill { margin-top: 8px; display: inline-flex; min-width: 84px; justify-content: center; border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 800; }
+		.pill.high { background: rgba(239, 68, 68, 0.14); color: var(--high); }
+		.pill.medium { background: rgba(245, 158, 11, 0.16); color: var(--medium); }
+		.pill.low { background: rgba(139, 92, 246, 0.14); color: var(--low); }
+		.empty { margin-top: 18px; padding: 24px; border: 1px dashed var(--border); border-radius: 18px; text-align: center; color: var(--muted); font-weight: 700; }
+		.link { margin-top: 14px; display: inline-flex; gap: 8px; color: var(--primary); text-decoration: none; font-weight: 800; }
+	</style>
+</head>
+<body>
+	<article class="card">
+		<div class="header"><div><h1 id="title">Top 5 Deals at Risk</h1><div class="updated"><span id="updated-label">Last updated:</span> <span id="updated-value"></span></div></div><div class="controls"><select id="period-select"></select><select id="risk-select"></select><select id="stage-select"></select></div></div>
+		<div class="list" id="list"></div>
+		<a class="link" href="#" id="link">View all at-risk deals <span aria-hidden="true">→</span></a>
+	</article>
+	<script>
+		const LANG = (() => { const language = navigator.language || ''; if (language.startsWith('de')) return 'de'; if (language.startsWith('fr')) return 'fr'; if (language.startsWith('es')) return 'es'; if (language.startsWith('ja')) return 'ja'; if (language === 'en-GB') return 'en-GB'; return 'en-US'; })();
+		document.documentElement.lang = LANG;
+		const LOCALE = { de: 'de-DE', fr: 'fr-FR', es: 'es-ES', ja: 'ja-JP', 'en-GB': 'en-GB', 'en-US': 'en-US' }[LANG];
+		const CURRENCY = { de: 'EUR', fr: 'EUR', es: 'EUR', ja: 'JPY', 'en-GB': 'GBP', 'en-US': 'USD' }[LANG];
+		const HOUR12 = LANG === 'en-GB' || LANG === 'en-US';
+		const T = {
+			de: { title: 'Top 5 risikobehaftete Deals', updatedLabel: 'Zuletzt aktualisiert:', link: 'Alle risikobehafteten Deals ansehen', allRisk: 'Alle Risiken', highRisk: 'Nur hohes Risiko', mediumRisk: 'Mittleres Risiko', lowRisk: 'Niedriges Risiko', allStages: 'Alle Phasen', proposal: 'Angebot', negotiation: 'Verhandlung', closing: 'Abschluss', high: 'Hoch', medium: 'Mittel', low: 'Niedrig', noData: 'Keine Deals entsprechen den aktuellen Filtern.', noMovement: 'Keine Phasenanderung seit ${days} Tagen', closeDate: 'Abschlussdatum um ${days} Tage verschoben', stakeholder: 'Stakeholder-Wechsel erkannt', longClose: 'Abschlussdatum in mehr als ${days} Tagen', today: 'Heute', current: 'Dieses Quartal', next: 'Nächstes Quartal', ytd: 'Geschaftsjahr bisher', updatedAt: '${dayLabel}, ${timeLabel}' },
+			fr: { title: 'Top 5 des opportunites a risque', updatedLabel: 'Derniere mise a jour :', link: 'Voir toutes les opportunites a risque', allRisk: 'Tous les risques', highRisk: 'Risque eleve', mediumRisk: 'Risque moyen', lowRisk: 'Risque faible', allStages: 'Toutes les etapes', proposal: 'Proposition', negotiation: 'Negociation', closing: 'Cloture', high: 'Eleve', medium: 'Moyen', low: 'Faible', noData: 'Aucune opportunite ne correspond aux filtres actuels.', noMovement: 'Aucun changement d\'etape depuis ${days} jours', closeDate: 'Date de cloture repoussee de ${days} jours', stakeholder: 'Changement d\'interlocuteur detecte', longClose: 'Date de cloture dans plus de ${days} jours', today: 'Aujourd\'hui', current: 'Ce trimestre', next: 'Trimestre suivant', ytd: 'Depuis le debut de l\'annee', updatedAt: '${dayLabel}, ${timeLabel}' },
+			es: { title: '5 oportunidades con mayor riesgo', updatedLabel: 'Ultima actualizacion:', link: 'Ver todas las oportunidades en riesgo', allRisk: 'Todos los riesgos', highRisk: 'Solo riesgo alto', mediumRisk: 'Riesgo medio', lowRisk: 'Riesgo bajo', allStages: 'Todas las etapas', proposal: 'Propuesta', negotiation: 'Negociacion', closing: 'Cierre', high: 'Alto', medium: 'Medio', low: 'Bajo', noData: 'Ninguna oportunidad coincide con los filtros actuales.', noMovement: 'Sin avance de etapa durante ${days} dias', closeDate: 'Fecha de cierre retrasada ${days} dias', stakeholder: 'Se detecto un cambio de interlocutor', longClose: 'Fecha de cierre dentro de mas de ${days} dias', today: 'Hoy', current: 'Este trimestre', next: 'Proximo trimestre', ytd: 'Ano en curso', updatedAt: '${dayLabel}, ${timeLabel}' },
+			ja: { title: 'Top 5 Deals at Risk', updatedLabel: 'Last updated:', link: 'View all at-risk deals', allRisk: 'All risk levels', highRisk: 'High risk only', mediumRisk: 'Medium risk', lowRisk: 'Low risk', allStages: 'All stages', proposal: 'Proposal', negotiation: 'Negotiation', closing: 'Closing', high: 'High', medium: 'Medium', low: 'Low', noData: 'No deals match the current filters.', noMovement: 'No stage movement for ${days} days', closeDate: 'Close date slipped by ${days} days', stakeholder: 'Stakeholder change detected', longClose: 'Close date in ${days}+ days', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' },
+			'en-GB': { title: 'Top 5 Deals at Risk', updatedLabel: 'Last updated:', link: 'View all at-risk deals', allRisk: 'All risk levels', highRisk: 'High risk only', mediumRisk: 'Medium risk', lowRisk: 'Low risk', allStages: 'All stages', proposal: 'Proposal', negotiation: 'Negotiation', closing: 'Closing', high: 'High', medium: 'Medium', low: 'Low', noData: 'No deals match the current filters.', noMovement: 'No stage movement for ${days} days', closeDate: 'Close date slipped by ${days} days', stakeholder: 'Stakeholder change detected', longClose: 'Close date in ${days}+ days', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' },
+			'en-US': { title: 'Top 5 Deals at Risk', updatedLabel: 'Last updated:', link: 'View all at-risk deals', allRisk: 'All risk levels', highRisk: 'High risk only', mediumRisk: 'Medium risk', lowRisk: 'Low risk', allStages: 'All stages', proposal: 'Proposal', negotiation: 'Negotiation', closing: 'Closing', high: 'High', medium: 'Medium', low: 'Low', noData: 'No deals match the current filters.', noMovement: 'No stage movement for ${days} days', closeDate: 'Close date slipped by ${days} days', stakeholder: 'Stakeholder change detected', longClose: 'Close date in ${days}+ days', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' }
+		};
+		const t = T[LANG] || T['en-US'];
+		const DATA = { current: { updatedAt: '2026-04-23T08:30:00', risks: [{ company: 'Advanced Health Systems', amount: 2.8, severity: 'high', stage: 'negotiation', note: 'noMovement', days: 18 }, { company: 'Global Retail Group', amount: 1.9, severity: 'high', stage: 'proposal', note: 'closeDate', days: 12 }, { company: 'Brighton University', amount: 1.5, severity: 'medium', stage: 'proposal', note: 'stakeholder' }, { company: 'Northfield Industries', amount: 1.2, severity: 'medium', stage: 'proposal', note: 'noMovement', days: 9 }, { company: 'Summit Partners', amount: 1.1, severity: 'low', stage: 'closing', note: 'longClose', days: 30 }] }, next: { updatedAt: '2026-04-23T09:10:00', risks: [{ company: 'Blue Harbor Logistics', amount: 2.4, severity: 'high', stage: 'proposal', note: 'closeDate', days: 15 }, { company: 'Aurora Biotech', amount: 2.1, severity: 'high', stage: 'negotiation', note: 'noMovement', days: 11 }, { company: 'Metro Energy', amount: 1.8, severity: 'medium', stage: 'closing', note: 'stakeholder' }, { company: 'Northern Charter', amount: 1.6, severity: 'medium', stage: 'proposal', note: 'longClose', days: 28 }, { company: 'Vertex Foods', amount: 1.2, severity: 'low', stage: 'proposal', note: 'noMovement', days: 7 }] }, ytd: { updatedAt: '2026-04-23T10:05:00', risks: [{ company: 'Helios Health', amount: 4.3, severity: 'high', stage: 'negotiation', note: 'noMovement', days: 21 }, { company: 'Continental Transit', amount: 3.6, severity: 'high', stage: 'proposal', note: 'closeDate', days: 18 }, { company: 'Aster Aerospace', amount: 2.7, severity: 'medium', stage: 'proposal', note: 'stakeholder' }, { company: 'Northshore Capital', amount: 2.3, severity: 'medium', stage: 'closing', note: 'longClose', days: 34 }, { company: 'Ivy Foods', amount: 1.8, severity: 'low', stage: 'proposal', note: 'noMovement', days: 8 }] } };
+		const compactCurrencyFormatter = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: CURRENCY, notation: 'compact', maximumFractionDigits: CURRENCY === 'JPY' ? 0 : 1 });
+		const timeFormatter = new Intl.DateTimeFormat(LOCALE, { hour: 'numeric', minute: '2-digit', hour12: HOUR12 });
+		const state = { selectedPeriod: 'current', risk: 'all', stage: 'all' };
+		function tr(key, vars = {}) { let text = t[key] || key; Object.entries(vars).forEach(([name, value]) => { text = text.replace(`\${${name}}`, value); }); return text; }
+		function applySBBrand() { let sbBrand = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim(); if (!sbBrand) { try { sbBrand = getComputedStyle(window.parent.document.documentElement).getPropertyValue('--sb-brand').trim(); } catch (error) { sbBrand = ''; } } if (sbBrand) document.documentElement.style.setProperty('--primary', sbBrand); }
+		function formatCurrency(value) { return compactCurrencyFormatter.format(value * 1000000); }
+		function initials(name) { return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(); }
+		function riskColor(level) { if (level === 'high') return 'var(--high)'; if (level === 'medium') return 'var(--medium)'; return 'var(--low)'; }
+		function render() {
+			const data = DATA[state.selectedPeriod];
+			document.title = t.title;
+			document.getElementById('title').textContent = t.title;
+			document.getElementById('updated-label').textContent = t.updatedLabel;
+			document.getElementById('updated-value').textContent = tr('updatedAt', { dayLabel: t.today, timeLabel: timeFormatter.format(new Date(data.updatedAt)) });
+			document.getElementById('link').firstChild.textContent = `${t.link} `;
+			document.getElementById('period-select').innerHTML = `<option value="current">${t.current}</option><option value="next">${t.next}</option><option value="ytd">${t.ytd}</option>`;
+			document.getElementById('period-select').value = state.selectedPeriod;
+			document.getElementById('risk-select').innerHTML = `<option value="all">${t.allRisk}</option><option value="high">${t.highRisk}</option><option value="medium">${t.mediumRisk}</option><option value="low">${t.lowRisk}</option>`;
+			document.getElementById('risk-select').value = state.risk;
+			document.getElementById('stage-select').innerHTML = `<option value="all">${t.allStages}</option><option value="proposal">${t.proposal}</option><option value="negotiation">${t.negotiation}</option><option value="closing">${t.closing}</option>`;
+			document.getElementById('stage-select').value = state.stage;
+			const filtered = data.risks.filter((risk) => (state.risk === 'all' || risk.severity === state.risk) && (state.stage === 'all' || risk.stage === state.stage));
+			const list = document.getElementById('list');
+			if (!filtered.length) { list.innerHTML = `<div class="empty">${t.noData}</div>`; return; }
+			list.innerHTML = filtered.map((risk) => { const note = risk.note === 'stakeholder' ? t.stakeholder : tr(risk.note, { days: risk.days }); return `<div class="item"><div class="avatar" style="color:${riskColor(risk.severity)}">${initials(risk.company)}</div><div class="details"><strong>${risk.company}</strong><span>${note}</span></div><div class="amount">${formatCurrency(risk.amount)}<div class="pill ${risk.severity}">${t[risk.severity]}</div></div></div>`; }).join('');
+		}
+		document.getElementById('period-select').addEventListener('change', (event) => { state.selectedPeriod = event.target.value; render(); });
+		document.getElementById('risk-select').addEventListener('change', (event) => { state.risk = event.target.value; render(); });
+		document.getElementById('stage-select').addEventListener('change', (event) => { state.stage = event.target.value; render(); });
+		applySBBrand();
+		render();
+	</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="widget-name" content="Salesforce KPI Tile - Closed Won">
+	<title>Closed Won</title>
+	<style>
+		:root { --primary: var(--sb-brand, #2563eb); --success: #16a34a; --danger: #ef4444; --text: #111827; --muted: #6b7280; --bg: #f3f6fb; --surface: #ffffff; --border: #dbe3ef; --shadow: 0 18px 42px rgba(15, 23, 42, 0.08); }
+		@media (prefers-color-scheme: dark) { :root { --primary: var(--sb-brand, #60a5fa); --success: #4ade80; --danger: #f87171; --text: #f8fafc; --muted: #94a3b8; --bg: #0f172a; --surface: #111c31; --border: #24324a; --shadow: 0 18px 42px rgba(2, 6, 23, 0.35); } }
+		* { box-sizing: border-box; }
+		body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+		.card { max-width: 440px; margin: 0 auto; padding: 22px; border-radius: 24px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
+		.header { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+		.label { margin: 0; color: var(--muted); font-size: 15px; font-weight: 700; }
+		.updated { margin-top: 10px; color: var(--muted); font-size: 13px; font-weight: 600; }
+		select { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font: inherit; background: transparent; color: inherit; }
+		.value-row { margin-top: 18px; display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+		.value { margin: 0; font-size: clamp(40px, 8vw, 60px); line-height: 0.95; font-weight: 800; letter-spacing: -0.04em; }
+		.icon { width: 64px; height: 64px; border-radius: 999px; display: grid; place-items: center; background: rgba(245, 158, 11, 0.12); color: #f59e0b; flex: none; }
+		.icon svg { width: 28px; height: 28px; }
+		.meta { margin-top: 16px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
+		.target { color: var(--muted); font-size: 15px; font-weight: 700; }
+		.trend { font-size: 15px; font-weight: 800; }
+		.trend.up { color: var(--success); }
+		.trend.down { color: var(--danger); }
+	</style>
+</head>
+<body>
+	<article class="card">
+		<div class="header"><p class="label" id="label">Closed Won</p><select id="period-select"></select></div>
+		<div class="updated"><span id="updated-label">Last updated:</span> <span id="updated-value"></span></div>
+		<div class="value-row"><div><p class="value" id="value"></p><div class="meta"><span class="target" id="target"></span><span class="trend" id="trend"></span></div></div><div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"></path><path d="M5 6H3a2 2 0 0 0 2 2"></path><path d="M19 6h2a2 2 0 0 1-2 2"></path></svg></div></div>
+	</article>
+	<script>
+		const LANG = (() => { const language = navigator.language || ''; if (language.startsWith('de')) return 'de'; if (language.startsWith('fr')) return 'fr'; if (language.startsWith('es')) return 'es'; if (language.startsWith('ja')) return 'ja'; if (language === 'en-GB') return 'en-GB'; return 'en-US'; })();
+		document.documentElement.lang = LANG;
+		const LOCALE = { de: 'de-DE', fr: 'fr-FR', es: 'es-ES', ja: 'ja-JP', 'en-GB': 'en-GB', 'en-US': 'en-US' }[LANG];
+		const CURRENCY = { de: 'EUR', fr: 'EUR', es: 'EUR', ja: 'JPY', 'en-GB': 'GBP', 'en-US': 'USD' }[LANG];
+		const HOUR12 = LANG === 'en-GB' || LANG === 'en-US';
+		const T = {
+			de: { title: 'Gewonnen', updatedLabel: 'Zuletzt aktualisiert:', targetLabel: 'gegen Ziel', today: 'Heute', periodCurrentQuarter: 'Dieses Quartal', periodNextQuarter: 'Nächstes Quartal', periodYtd: 'Geschäftsjahr bisher', updatedAt: '${dayLabel}, ${timeLabel}' },
+			fr: { title: 'Gagné', updatedLabel: 'Dernière mise à jour :', targetLabel: 'vs objectif', today: 'Aujourd\'hui', periodCurrentQuarter: 'Ce trimestre', periodNextQuarter: 'Trimestre suivant', periodYtd: 'Depuis le début de l’année', updatedAt: '${dayLabel}, ${timeLabel}' },
+			es: { title: 'Ganado', updatedLabel: 'Última actualización:', targetLabel: 'vs objetivo', today: 'Hoy', periodCurrentQuarter: 'Este trimestre', periodNextQuarter: 'Próximo trimestre', periodYtd: 'Año en curso', updatedAt: '${dayLabel}, ${timeLabel}' },
+			ja: { title: '受注済み', updatedLabel: '最終更新:', targetLabel: '目標比', today: '今日', periodCurrentQuarter: '今四半期', periodNextQuarter: '次四半期', periodYtd: '年度累計', updatedAt: '${dayLabel} ${timeLabel}' },
+			'en-GB': { title: 'Closed Won', updatedLabel: 'Last updated:', targetLabel: 'vs target', today: 'Today', periodCurrentQuarter: 'This Quarter', periodNextQuarter: 'Next Quarter', periodYtd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' },
+			'en-US': { title: 'Closed Won', updatedLabel: 'Last updated:', targetLabel: 'vs target', today: 'Today', periodCurrentQuarter: 'This Quarter', periodNextQuarter: 'Next Quarter', periodYtd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' }
+		};
+		const t = T[LANG] || T['en-US'];
+		const DATA = { current: { updatedAt: '2026-04-23T08:30:00', target: 6.5, value: 7.2 }, next: { updatedAt: '2026-04-23T09:10:00', target: 7.1, value: 6.1 }, ytd: { updatedAt: '2026-04-23T10:05:00', target: 18.9, value: 24.8 } };
+		const compactCurrencyFormatter = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: CURRENCY, notation: 'compact', maximumFractionDigits: CURRENCY === 'JPY' ? 0 : 1 });
+		const percentFormatter = new Intl.NumberFormat(LOCALE, { style: 'percent', maximumFractionDigits: 0 });
+		const timeFormatter = new Intl.DateTimeFormat(LOCALE, { hour: 'numeric', minute: '2-digit', hour12: HOUR12 });
+		const periodOptions = [{ id: 'current', key: 'periodCurrentQuarter' }, { id: 'next', key: 'periodNextQuarter' }, { id: 'ytd', key: 'periodYtd' }];
+		const state = { selectedPeriod: 'current' };
+		function tr(key, vars = {}) { let text = t[key] || key; Object.entries(vars).forEach(([name, value]) => { text = text.replace(`\${${name}}`, value); }); return text; }
+		function applySBBrand() { let sbBrand = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim(); if (!sbBrand) { try { sbBrand = getComputedStyle(window.parent.document.documentElement).getPropertyValue('--sb-brand').trim(); } catch (error) { sbBrand = ''; } } if (sbBrand) document.documentElement.style.setProperty('--primary', sbBrand); }
+		function formatCurrencyMillions(value) { return compactCurrencyFormatter.format(value * 1000000); }
+		function render() {
+			const data = DATA[state.selectedPeriod];
+			const delta = (data.value - data.target) / data.target;
+			document.title = t.title;
+			document.getElementById('label').textContent = t.title;
+			document.getElementById('updated-label').textContent = t.updatedLabel;
+			document.getElementById('updated-value').textContent = tr('updatedAt', { dayLabel: t.today, timeLabel: timeFormatter.format(new Date(data.updatedAt)) });
+			document.getElementById('value').textContent = formatCurrencyMillions(data.value);
+			document.getElementById('target').textContent = `${t.targetLabel} ${formatCurrencyMillions(data.target)}`;
+			const trend = document.getElementById('trend');
+			trend.className = `trend ${delta >= 0 ? 'up' : 'down'}`;
+			trend.textContent = `${delta >= 0 ? '↑' : '↓'} ${percentFormatter.format(Math.abs(delta))}`;
+			const select = document.getElementById('period-select');
+			select.innerHTML = periodOptions.map((option) => `<option value="${option.id}">${t[option.key]}</option>`).join('');
+			select.value = state.selectedPeriod;
+		}
+		document.getElementById('period-select').addEventListener('change', (event) => { state.selectedPeriod = event.target.value; render(); });
+		applySBBrand();
+		render();
+	</script>
+</body>
+</html>

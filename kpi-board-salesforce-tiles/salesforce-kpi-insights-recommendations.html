@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="widget-name" content="Salesforce Tile - Insights and Recommendations">
+	<title>Insights & Recommendations</title>
+	<style>
+		:root { --primary: var(--sb-brand, #2563eb); --success: #16a34a; --warning: #f59e0b; --danger: #ef4444; --text: #111827; --muted: #6b7280; --bg: #f3f6fb; --surface: #ffffff; --border: #dbe3ef; --shadow: 0 18px 42px rgba(15, 23, 42, 0.08); }
+		@media (prefers-color-scheme: dark) { :root { --primary: var(--sb-brand, #60a5fa); --success: #4ade80; --warning: #fbbf24; --danger: #f87171; --text: #f8fafc; --muted: #94a3b8; --bg: #0f172a; --surface: #111c31; --border: #24324a; --shadow: 0 18px 42px rgba(2, 6, 23, 0.35); } }
+		* { box-sizing: border-box; }
+		body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+		.card { max-width: 620px; margin: 0 auto; padding: 22px; border-radius: 24px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
+		.header { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+		h1 { margin: 0; font-size: 22px; }
+		.updated { margin-top: 8px; color: var(--muted); font-size: 13px; font-weight: 600; }
+		select { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font: inherit; background: transparent; color: inherit; }
+		.list { display: grid; gap: 16px; margin-top: 18px; }
+		.item { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+		.item:last-child { border-bottom: none; }
+		.icon { width: 46px; height: 46px; border-radius: 999px; display: grid; place-items: center; border: 2px solid currentColor; background: color-mix(in srgb, currentColor 12%, transparent); }
+		.icon svg { width: 24px; height: 24px; }
+		.icon.warning { color: var(--danger); }
+		.icon.focus { color: var(--warning); }
+		.icon.success { color: var(--success); }
+		.copy strong { display: block; font-size: 16px; margin-bottom: 4px; }
+		.copy span { color: var(--muted); font-size: 14px; }
+		.chevron { color: var(--muted); }
+	</style>
+</head>
+<body>
+	<article class="card">
+		<div class="header"><div><h1 id="title">Insights & Recommendations</h1><div class="updated"><span id="updated-label">Last updated:</span> <span id="updated-value"></span></div></div><select id="period-select"></select></div>
+		<div class="list" id="list"></div>
+	</article>
+	<script>
+		const LANG = (() => { const language = navigator.language || ''; if (language.startsWith('de')) return 'de'; if (language.startsWith('fr')) return 'fr'; if (language.startsWith('es')) return 'es'; if (language.startsWith('ja')) return 'ja'; if (language === 'en-GB') return 'en-GB'; return 'en-US'; })();
+		document.documentElement.lang = LANG;
+		const LOCALE = { de: 'de-DE', fr: 'fr-FR', es: 'es-ES', ja: 'ja-JP', 'en-GB': 'en-GB', 'en-US': 'en-US' }[LANG];
+		const HOUR12 = LANG === 'en-GB' || LANG === 'en-US';
+		const T = {
+			de: { title: 'Erkenntnisse & Empfehlungen', updatedLabel: 'Zuletzt aktualisiert:', riskTitle: '${count} Deals haben hohes Risiko', riskCopy: 'Prufen Sie diese Deals jetzt, um Ihre Zielerreichung zu sichern.', focusTitle: 'Fokus auf Angebotsphase', focusCopy: '${share} der Pipeline bleibt in der Angebotsphase stehen.', successTitle: 'Auf Kurs, Ziel zu ubertreffen', successCopy: 'Das Team liegt aktuell vor dem Zielwert.', today: 'Heute', current: 'Dieses Quartal', next: 'Nachstes Quartal', ytd: 'Geschaftsjahr bisher', updatedAt: '${dayLabel}, ${timeLabel}' },
+			fr: { title: 'Analyses et recommandations', updatedLabel: 'Derniere mise a jour :', riskTitle: '${count} opportunites sont a risque eleve', riskCopy: 'Examinez-les maintenant pour rester sur la trajectoire prevue.', focusTitle: 'Se concentrer sur l\'etape de proposition', focusCopy: '${share} du pipeline reste bloque en proposition.', successTitle: 'En bonne voie pour depasser l\'objectif', successCopy: 'L\'equipe est actuellement en avance sur l\'objectif.', today: 'Aujourd\'hui', current: 'Ce trimestre', next: 'Trimestre suivant', ytd: 'Depuis le debut de l\'annee', updatedAt: '${dayLabel}, ${timeLabel}' },
+			es: { title: 'Informacion y recomendaciones', updatedLabel: 'Ultima actualizacion:', riskTitle: '${count} oportunidades tienen riesgo alto', riskCopy: 'Revisalas ahora para mantener el pipeline en buen estado.', focusTitle: 'Centrarse en la etapa de propuesta', focusCopy: '${share} del pipeline sigue detenido en propuesta.', successTitle: 'En camino de superar el objetivo', successCopy: 'El equipo va por delante del objetivo actual.', today: 'Hoy', current: 'Este trimestre', next: 'Proximo trimestre', ytd: 'Ano en curso', updatedAt: '${dayLabel}, ${timeLabel}' },
+			ja: { title: 'Insights & Recommendations', updatedLabel: 'Last updated:', riskTitle: '${count} deals are at high risk', riskCopy: 'Review these deals now to keep your pipeline on track.', focusTitle: 'Focus on proposal stage', focusCopy: '${share} of your pipeline is still in proposal.', successTitle: 'On track to exceed target', successCopy: 'The team is currently pacing ahead of target.', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' },
+			'en-GB': { title: 'Insights & Recommendations', updatedLabel: 'Last updated:', riskTitle: '${count} deals are at high risk', riskCopy: 'Review these deals now to keep your quarter on track.', focusTitle: 'Focus on proposal stage', focusCopy: '${share} of your pipeline is still in proposal.', successTitle: 'On track to exceed target', successCopy: 'The team is currently pacing ahead of target.', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' },
+			'en-US': { title: 'Insights & Recommendations', updatedLabel: 'Last updated:', riskTitle: '${count} deals are at high risk', riskCopy: 'Review these deals now to keep your pipeline on track.', focusTitle: 'Focus on proposal stage', focusCopy: '${share} of your pipeline is still in proposal.', successTitle: 'On track to exceed target', successCopy: 'The team is currently pacing ahead of target.', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' }
+		};
+		const t = T[LANG] || T['en-US'];
+		const DATA = { current: { updatedAt: '2026-04-23T08:30:00', proposalShare: 0.30, highRiskCount: 2 }, next: { updatedAt: '2026-04-23T09:10:00', proposalShare: 0.26, highRiskCount: 2 }, ytd: { updatedAt: '2026-04-23T10:05:00', proposalShare: 0.28, highRiskCount: 2 } };
+		const percentFormatter = new Intl.NumberFormat(LOCALE, { style: 'percent', maximumFractionDigits: 0 });
+		const timeFormatter = new Intl.DateTimeFormat(LOCALE, { hour: 'numeric', minute: '2-digit', hour12: HOUR12 });
+		const state = { selectedPeriod: 'current' };
+		const icons = { warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86l-8.17 14A2 2 0 0 0 3.83 21h16.34a2 2 0 0 0 1.71-3.14l-8.17-14a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>', focus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M9 8h6"></path><path d="M9 12h6"></path><path d="M9 16h3"></path></svg>', success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"></path><path d="M5 6H3a2 2 0 0 0 2 2"></path><path d="M19 6h2a2 2 0 0 1-2 2"></path></svg>' };
+		function tr(key, vars = {}) { let text = t[key] || key; Object.entries(vars).forEach(([name, value]) => { text = text.replace(`\${${name}}`, value); }); return text; }
+		function applySBBrand() { let sbBrand = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim(); if (!sbBrand) { try { sbBrand = getComputedStyle(window.parent.document.documentElement).getPropertyValue('--sb-brand').trim(); } catch (error) { sbBrand = ''; } } if (sbBrand) document.documentElement.style.setProperty('--primary', sbBrand); }
+		function render() {
+			const data = DATA[state.selectedPeriod];
+			document.title = t.title;
+			document.getElementById('title').textContent = t.title;
+			document.getElementById('updated-label').textContent = t.updatedLabel;
+			document.getElementById('updated-value').textContent = tr('updatedAt', { dayLabel: t.today, timeLabel: timeFormatter.format(new Date(data.updatedAt)) });
+			document.getElementById('period-select').innerHTML = `<option value="current">${t.current}</option><option value="next">${t.next}</option><option value="ytd">${t.ytd}</option>`;
+			document.getElementById('period-select').value = state.selectedPeriod;
+			const items = [
+				{ type: 'warning', title: tr('riskTitle', { count: data.highRiskCount }), copy: t.riskCopy },
+				{ type: 'focus', title: t.focusTitle, copy: tr('focusCopy', { share: percentFormatter.format(data.proposalShare) }) },
+				{ type: 'success', title: t.successTitle, copy: t.successCopy }
+			];
+			document.getElementById('list').innerHTML = items.map((item) => `<div class="item"><div class="icon ${item.type}">${icons[item.type]}</div><div class="copy"><strong>${item.title}</strong><span>${item.copy}</span></div><div class="chevron">›</div></div>`).join('');
+		}
+		document.getElementById('period-select').addEventListener('change', (event) => { state.selectedPeriod = event.target.value; render(); });
+		applySBBrand();
+		render();
+	</script>
+</body>
+</html>

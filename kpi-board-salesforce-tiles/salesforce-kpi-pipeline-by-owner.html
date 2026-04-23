@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="widget-name" content="Salesforce Tile - Pipeline by Owner">
+	<title>Pipeline by Owner</title>
+	<style>
+		:root { --primary: var(--sb-brand, #2563eb); --success: #16a34a; --text: #111827; --muted: #6b7280; --bg: #f3f6fb; --surface: #ffffff; --border: #dbe3ef; --shadow: 0 18px 42px rgba(15, 23, 42, 0.08); }
+		@media (prefers-color-scheme: dark) { :root { --primary: var(--sb-brand, #60a5fa); --success: #4ade80; --text: #f8fafc; --muted: #94a3b8; --bg: #0f172a; --surface: #111c31; --border: #24324a; --shadow: 0 18px 42px rgba(2, 6, 23, 0.35); } }
+		* { box-sizing: border-box; }
+		body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+		.card { max-width: 980px; margin: 0 auto; padding: 22px; border-radius: 24px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
+		.header { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+		h1 { margin: 0; font-size: 22px; }
+		.updated { margin-top: 8px; color: var(--muted); font-size: 13px; font-weight: 600; }
+		.controls { display: flex; gap: 10px; flex-wrap: wrap; }
+		select { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font: inherit; background: transparent; color: inherit; }
+		.table-wrap { overflow: auto; margin-top: 18px; }
+		table { width: 100%; min-width: 760px; border-collapse: collapse; }
+		th, td { padding: 14px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+		th { color: var(--muted); font-size: 14px; font-weight: 800; }
+		td { font-size: 15px; font-weight: 700; }
+		.owner { display: inline-flex; align-items: center; gap: 12px; }
+		.photo { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #10203f; background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 20%, white), color-mix(in srgb, var(--primary) 46%, white)); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.66); }
+		.trend { color: var(--success); font-weight: 800; }
+		.empty { margin-top: 18px; padding: 24px; border: 1px dashed var(--border); border-radius: 18px; text-align: center; color: var(--muted); font-weight: 700; }
+		.link { margin-top: 14px; display: inline-flex; gap: 8px; color: var(--primary); text-decoration: none; font-weight: 800; }
+		.footnote { margin-top: 16px; color: var(--muted); font-size: 14px; font-weight: 600; }
+	</style>
+</head>
+<body>
+	<article class="card">
+		<div class="header"><div><h1 id="title">Pipeline by Owner (vs Target)</h1><div class="updated"><span id="updated-label">Last updated:</span> <span id="updated-value"></span></div></div><div class="controls"><select id="period-select"></select><select id="stage-select"></select></div></div>
+		<div class="table-wrap"><table><thead><tr><th id="owner-column">Owner</th><th id="pipeline-column">Pipeline Value</th><th id="target-column">vs Target</th><th id="coverage-column">Coverage Ratio</th><th id="deal-column">Top Deal</th></tr></thead><tbody id="body"></tbody></table></div>
+		<a class="link" href="#" id="link">View full report <span aria-hidden="true">→</span></a>
+		<div class="footnote" id="footnote"></div>
+	</article>
+	<script>
+		const LANG = (() => { const language = navigator.language || ''; if (language.startsWith('de')) return 'de'; if (language.startsWith('fr')) return 'fr'; if (language.startsWith('es')) return 'es'; if (language.startsWith('ja')) return 'ja'; if (language === 'en-GB') return 'en-GB'; return 'en-US'; })();
+		document.documentElement.lang = LANG;
+		const LOCALE = { de: 'de-DE', fr: 'fr-FR', es: 'es-ES', ja: 'ja-JP', 'en-GB': 'en-GB', 'en-US': 'en-US' }[LANG];
+		const CURRENCY = { de: 'EUR', fr: 'EUR', es: 'EUR', ja: 'JPY', 'en-GB': 'GBP', 'en-US': 'USD' }[LANG];
+		const HOUR12 = LANG === 'en-GB' || LANG === 'en-US';
+		const T = {
+			de: { title: 'Pipeline nach Verantwortlichen (vs. Ziel)', updatedLabel: 'Zuletzt aktualisiert:', owner: 'Verantwortlich', pipeline: 'Pipeline-Wert', target: 'vs. Ziel', coverage: 'Abdeckungsquote', topDeal: 'Grosster Deal', link: 'Vollstandigen Bericht ansehen', footnote: 'Daten aus Salesforce. Kennzahlen konnen abgeschlossene oder private Opportunities ausschliessen.', allStages: 'Alle Phasen', proposal: 'Angebot', negotiation: 'Verhandlung', qualification: 'Qualifizierung', closing: 'Abschluss', noData: 'Keine Owner entsprechen den aktuellen Filtern.', today: 'Heute', current: 'Dieses Quartal', next: 'Nachstes Quartal', ytd: 'Geschaftsjahr bisher', updatedAt: '${dayLabel}, ${timeLabel}' },
+			fr: { title: 'Pipeline par responsable (vs objectif)', updatedLabel: 'Derniere mise a jour :', owner: 'Responsable', pipeline: 'Valeur du pipeline', target: 'vs objectif', coverage: 'Taux de couverture', topDeal: 'Plus grosse opportunite', link: 'Voir le rapport complet', footnote: 'Donnees issues de Salesforce. Les metriques peuvent exclure les opportunites cloturees ou privees.', allStages: 'Toutes les etapes', proposal: 'Proposition', negotiation: 'Negociation', qualification: 'Qualification', closing: 'Cloture', noData: 'Aucun responsable ne correspond aux filtres actuels.', today: 'Aujourd\'hui', current: 'Ce trimestre', next: 'Trimestre suivant', ytd: 'Depuis le debut de l\'annee', updatedAt: '${dayLabel}, ${timeLabel}' },
+			es: { title: 'Pipeline por responsable (vs objetivo)', updatedLabel: 'Ultima actualizacion:', owner: 'Responsable', pipeline: 'Valor del pipeline', target: 'vs objetivo', coverage: 'Ratio de cobertura', topDeal: 'Mayor oportunidad', link: 'Ver informe completo', footnote: 'Datos de Salesforce. Las metricas pueden excluir oportunidades cerradas o privadas.', allStages: 'Todas las etapas', proposal: 'Propuesta', negotiation: 'Negociacion', qualification: 'Cualificacion', closing: 'Cierre', noData: 'Ningun responsable coincide con los filtros actuales.', today: 'Hoy', current: 'Este trimestre', next: 'Proximo trimestre', ytd: 'Ano en curso', updatedAt: '${dayLabel}, ${timeLabel}' },
+			ja: { title: 'Pipeline by Owner (vs Target)', updatedLabel: 'Last updated:', owner: 'Owner', pipeline: 'Pipeline Value', target: 'vs Target', coverage: 'Coverage Ratio', topDeal: 'Top Deal', link: 'View full report', footnote: 'Data from Salesforce. Metrics may exclude closed or private opportunities.', allStages: 'All stages', proposal: 'Proposal', negotiation: 'Negotiation', qualification: 'Qualification', closing: 'Closing', noData: 'No owners match the current filters.', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' },
+			'en-GB': { title: 'Pipeline by Owner (vs Target)', updatedLabel: 'Last updated:', owner: 'Owner', pipeline: 'Pipeline Value', target: 'vs Target', coverage: 'Coverage Ratio', topDeal: 'Top Deal', link: 'View full report', footnote: 'Data from Salesforce. Metrics may exclude closed or private opportunities.', allStages: 'All stages', proposal: 'Proposal', negotiation: 'Negotiation', qualification: 'Qualification', closing: 'Closing', noData: 'No owners match the current filters.', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' },
+			'en-US': { title: 'Pipeline by Owner (vs Target)', updatedLabel: 'Last updated:', owner: 'Owner', pipeline: 'Pipeline Value', target: 'vs Target', coverage: 'Coverage Ratio', topDeal: 'Top Deal', link: 'View full report', footnote: 'Data from Salesforce. Metrics may exclude closed or private opportunities.', allStages: 'All stages', proposal: 'Proposal', negotiation: 'Negotiation', qualification: 'Qualification', closing: 'Closing', noData: 'No owners match the current filters.', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', updatedAt: '${dayLabel}, ${timeLabel}' }
+		};
+		const t = T[LANG] || T['en-US'];
+		const DATA = { current: { updatedAt: '2026-04-23T08:30:00', owners: [{ name: 'Nicole Adams', pipeline: 6.2, delta: 0.24, coverage: 3.4, stage: 'negotiation', topDeal: 'Advanced Health Systems', topDealValue: 2.8 }, { name: 'Patrick Anderson', pipeline: 5.7, delta: 0.18, coverage: 3.0, stage: 'proposal', topDeal: 'Global Retail Group', topDealValue: 1.9 }, { name: 'Maria Apathangelou', pipeline: 4.9, delta: 0.22, coverage: 2.8, stage: 'qualification', topDeal: 'Brighton University', topDealValue: 1.5 }, { name: 'Mohammed Ashour', pipeline: 4.1, delta: 0.15, coverage: 2.6, stage: 'proposal', topDeal: 'Northfield Industries', topDealValue: 1.2 }, { name: 'Marcus Barlow', pipeline: 3.7, delta: 0.12, coverage: 2.4, stage: 'closing', topDeal: 'Summit Partners', topDealValue: 1.1 }] }, next: { updatedAt: '2026-04-23T09:10:00', owners: [{ name: 'Davide Bonchamp', pipeline: 6.8, delta: 0.26, coverage: 3.6, stage: 'proposal', topDeal: 'Blue Harbor Logistics', topDealValue: 2.4 }, { name: 'Fred Duchamp', pipeline: 5.9, delta: 0.19, coverage: 3.1, stage: 'negotiation', topDeal: 'Aurora Biotech', topDealValue: 2.1 }, { name: 'Henry Fitz', pipeline: 5.2, delta: 0.17, coverage: 2.9, stage: 'closing', topDeal: 'Metro Energy', topDealValue: 1.8 }, { name: 'Frank Fox', pipeline: 4.7, delta: 0.13, coverage: 2.7, stage: 'proposal', topDeal: 'Northern Charter', topDealValue: 1.6 }, { name: 'Ruby Gray', pipeline: 4.1, delta: 0.11, coverage: 2.5, stage: 'qualification', topDeal: 'Vertex Foods', topDealValue: 1.2 }] }, ytd: { updatedAt: '2026-04-23T10:05:00', owners: [{ name: 'Edward Hall', pipeline: 12.8, delta: 0.29, coverage: 3.9, stage: 'negotiation', topDeal: 'Helios Health', topDealValue: 4.3 }, { name: 'Ron Jacks', pipeline: 11.4, delta: 0.22, coverage: 3.5, stage: 'proposal', topDeal: 'Continental Transit', topDealValue: 3.6 }, { name: 'Maya Kumar', pipeline: 10.2, delta: 0.20, coverage: 3.2, stage: 'qualification', topDeal: 'Aster Aerospace', topDealValue: 2.7 }, { name: 'Thomas Lawrence', pipeline: 8.7, delta: 0.16, coverage: 2.9, stage: 'closing', topDeal: 'Northshore Capital', topDealValue: 2.3 }, { name: 'Kay Lion', pipeline: 7.4, delta: 0.14, coverage: 2.7, stage: 'proposal', topDeal: 'Ivy Foods', topDealValue: 1.8 }] } };
+		const compactCurrencyFormatter = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: CURRENCY, notation: 'compact', maximumFractionDigits: CURRENCY === 'JPY' ? 0 : 1 });
+		const percentFormatter = new Intl.NumberFormat(LOCALE, { style: 'percent', maximumFractionDigits: 0 });
+		const numberFormatter = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 1 });
+		const timeFormatter = new Intl.DateTimeFormat(LOCALE, { hour: 'numeric', minute: '2-digit', hour12: HOUR12 });
+		const state = { selectedPeriod: 'current', stage: 'all' };
+		function tr(key, vars = {}) { let text = t[key] || key; Object.entries(vars).forEach(([name, value]) => { text = text.replace(`\${${name}}`, value); }); return text; }
+		function applySBBrand() { let sbBrand = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim(); if (!sbBrand) { try { sbBrand = getComputedStyle(window.parent.document.documentElement).getPropertyValue('--sb-brand').trim(); } catch (error) { sbBrand = ''; } } if (sbBrand) document.documentElement.style.setProperty('--primary', sbBrand); }
+		function formatCurrency(value) { return compactCurrencyFormatter.format(value * 1000000); }
+		function formatRatio(value) { return `${numberFormatter.format(value)}x`; }
+		function initials(name) { return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(); }
+		function render() {
+			const data = DATA[state.selectedPeriod];
+			const filtered = data.owners.filter((owner) => state.stage === 'all' || owner.stage === state.stage);
+			document.title = t.title;
+			document.getElementById('title').textContent = t.title;
+			document.getElementById('updated-label').textContent = t.updatedLabel;
+			document.getElementById('updated-value').textContent = tr('updatedAt', { dayLabel: t.today, timeLabel: timeFormatter.format(new Date(data.updatedAt)) });
+			document.getElementById('owner-column').textContent = t.owner;
+			document.getElementById('pipeline-column').textContent = t.pipeline;
+			document.getElementById('target-column').textContent = t.target;
+			document.getElementById('coverage-column').textContent = t.coverage;
+			document.getElementById('deal-column').textContent = t.topDeal;
+			document.getElementById('link').firstChild.textContent = `${t.link} `;
+			document.getElementById('footnote').textContent = t.footnote;
+			document.getElementById('period-select').innerHTML = `<option value="current">${t.current}</option><option value="next">${t.next}</option><option value="ytd">${t.ytd}</option>`;
+			document.getElementById('period-select').value = state.selectedPeriod;
+			document.getElementById('stage-select').innerHTML = `<option value="all">${t.allStages}</option><option value="proposal">${t.proposal}</option><option value="negotiation">${t.negotiation}</option><option value="qualification">${t.qualification}</option><option value="closing">${t.closing}</option>`;
+			document.getElementById('stage-select').value = state.stage;
+			const body = document.getElementById('body');
+			if (!filtered.length) { body.innerHTML = `<tr><td colspan="5"><div class="empty">${t.noData}</div></td></tr>`; return; }
+			body.innerHTML = filtered.map((owner) => `<tr><td><span class="owner"><span class="photo">${initials(owner.name)}</span><span>${owner.name}</span></span></td><td>${formatCurrency(owner.pipeline)}</td><td><span class="trend">↑ ${percentFormatter.format(owner.delta)}</span></td><td>${formatRatio(owner.coverage)}</td><td>${owner.topDeal} - ${formatCurrency(owner.topDealValue)}</td></tr>`).join('');
+		}
+		document.getElementById('period-select').addEventListener('change', (event) => { state.selectedPeriod = event.target.value; render(); });
+		document.getElementById('stage-select').addEventListener('change', (event) => { state.stage = event.target.value; render(); });
+		applySBBrand();
+		render();
+	</script>
+</body>
+</html>

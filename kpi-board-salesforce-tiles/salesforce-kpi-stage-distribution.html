@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="widget-name" content="Salesforce Tile - Stage Distribution">
+	<title>Stage Distribution</title>
+	<style>
+		:root { --primary: var(--sb-brand, #2563eb); --text: #111827; --muted: #6b7280; --bg: #f3f6fb; --surface: #ffffff; --border: #dbe3ef; --shadow: 0 18px 42px rgba(15, 23, 42, 0.08); }
+		@media (prefers-color-scheme: dark) { :root { --primary: var(--sb-brand, #60a5fa); --text: #f8fafc; --muted: #94a3b8; --bg: #0f172a; --surface: #111c31; --border: #24324a; --shadow: 0 18px 42px rgba(2, 6, 23, 0.35); } }
+		* { box-sizing: border-box; }
+		body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+		.card { max-width: 760px; margin: 0 auto; padding: 22px; border-radius: 24px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
+		.header { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+		h1 { margin: 0; font-size: 22px; }
+		.updated { margin-top: 8px; color: var(--muted); font-size: 13px; font-weight: 600; }
+		select { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font: inherit; background: transparent; color: inherit; }
+		.layout { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 24px; align-items: center; margin-top: 18px; }
+		.donut { width: min(300px, 100%); aspect-ratio: 1; border-radius: 50%; margin: 0 auto; display: grid; place-items: center; position: relative; }
+		.donut::after { content: ''; position: absolute; inset: 24%; border-radius: 50%; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+		.center { position: relative; z-index: 1; text-align: center; }
+		.center strong { display: block; font-size: 28px; font-weight: 800; }
+		.center span { color: var(--muted); font-size: 13px; font-weight: 700; }
+		.legend { display: grid; gap: 14px; }
+		.row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; font-size: 16px; font-weight: 700; }
+		.dot { width: 14px; height: 14px; border-radius: 50%; }
+		.link { margin-top: 14px; display: inline-flex; gap: 8px; color: var(--primary); text-decoration: none; font-weight: 800; }
+		@media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+	</style>
+</head>
+<body>
+	<article class="card">
+		<div class="header"><div><h1 id="title">Stage Distribution</h1><div class="updated"><span id="updated-label">Last updated:</span> <span id="updated-value"></span></div></div><select id="period-select"></select></div>
+		<div class="layout"><div class="donut" id="donut"><div class="center"><strong id="total"></strong><span id="total-label">Total Pipeline</span></div></div><div class="legend" id="legend"></div></div>
+		<a class="link" href="#" id="link">View full pipeline report <span aria-hidden="true">→</span></a>
+	</article>
+	<script>
+		const LANG = (() => { const language = navigator.language || ''; if (language.startsWith('de')) return 'de'; if (language.startsWith('fr')) return 'fr'; if (language.startsWith('es')) return 'es'; if (language.startsWith('ja')) return 'ja'; if (language === 'en-GB') return 'en-GB'; return 'en-US'; })();
+		document.documentElement.lang = LANG;
+		const LOCALE = { de: 'de-DE', fr: 'fr-FR', es: 'es-ES', ja: 'ja-JP', 'en-GB': 'en-GB', 'en-US': 'en-US' }[LANG];
+		const CURRENCY = { de: 'EUR', fr: 'EUR', es: 'EUR', ja: 'JPY', 'en-GB': 'GBP', 'en-US': 'USD' }[LANG];
+		const HOUR12 = LANG === 'en-GB' || LANG === 'en-US';
+		const T = {
+			de: { title: 'Phasenverteilung', total: 'Gesamtpipeline', updatedLabel: 'Zuletzt aktualisiert:', link: 'Vollständigen Pipeline-Bericht ansehen', today: 'Heute', current: 'Dieses Quartal', next: 'Nächstes Quartal', ytd: 'Geschäftsjahr bisher', prospecting: 'Prospecting', qualification: 'Qualifizierung', proposal: 'Angebot', negotiation: 'Verhandlung', closing: 'Abschluss', updatedAt: '${dayLabel}, ${timeLabel}' },
+			fr: { title: 'Repartition par etape', total: 'Pipeline total', updatedLabel: 'Derniere mise a jour :', link: 'Voir le rapport complet du pipeline', today: 'Aujourd\'hui', current: 'Ce trimestre', next: 'Trimestre suivant', ytd: 'Depuis le debut de l\'annee', prospecting: 'Prospection', qualification: 'Qualification', proposal: 'Proposition', negotiation: 'Negociation', closing: 'Cloture', updatedAt: '${dayLabel}, ${timeLabel}' },
+			es: { title: 'Distribucion por etapa', total: 'Pipeline total', updatedLabel: 'Ultima actualizacion:', link: 'Ver informe completo del pipeline', today: 'Hoy', current: 'Este trimestre', next: 'Proximo trimestre', ytd: 'Ano en curso', prospecting: 'Prospeccion', qualification: 'Cualificacion', proposal: 'Propuesta', negotiation: 'Negociacion', closing: 'Cierre', updatedAt: '${dayLabel}, ${timeLabel}' },
+			ja: { title: 'Stage Distribution', total: 'Total Pipeline', updatedLabel: 'Last updated:', link: 'View full pipeline report', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', prospecting: 'Prospecting', qualification: 'Qualification', proposal: 'Proposal', negotiation: 'Negotiation', closing: 'Closing', updatedAt: '${dayLabel}, ${timeLabel}' },
+			'en-GB': { title: 'Stage Distribution', total: 'Total Pipeline', updatedLabel: 'Last updated:', link: 'View full pipeline report', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', prospecting: 'Prospecting', qualification: 'Qualification', proposal: 'Proposal', negotiation: 'Negotiation', closing: 'Closing', updatedAt: '${dayLabel}, ${timeLabel}' },
+			'en-US': { title: 'Stage Distribution', total: 'Total Pipeline', updatedLabel: 'Last updated:', link: 'View full pipeline report', today: 'Today', current: 'This Quarter', next: 'Next Quarter', ytd: 'FY To Date', prospecting: 'Prospecting', qualification: 'Qualification', proposal: 'Proposal', negotiation: 'Negotiation', closing: 'Closing', updatedAt: '${dayLabel}, ${timeLabel}' }
+		};
+		const t = T[LANG] || T['en-US'];
+		const DATA = {
+			current: { updatedAt: '2026-04-23T08:30:00', pipeline: 24.6, stages: [{ key: 'prospecting', percent: 0.10, amount: 2.5, color: '#2d8be8' }, { key: 'qualification', percent: 0.20, amount: 4.9, color: '#2bb9a9' }, { key: 'proposal', percent: 0.30, amount: 7.4, color: '#ffc12e' }, { key: 'negotiation', percent: 0.25, amount: 6.2, color: '#9a79dc' }, { key: 'closing', percent: 0.15, amount: 3.6, color: '#ff8222' }] },
+			next: { updatedAt: '2026-04-23T09:10:00', pipeline: 27.8, stages: [{ key: 'prospecting', percent: 0.16, amount: 4.5, color: '#2d8be8' }, { key: 'qualification', percent: 0.22, amount: 6.1, color: '#2bb9a9' }, { key: 'proposal', percent: 0.26, amount: 7.2, color: '#ffc12e' }, { key: 'negotiation', percent: 0.21, amount: 5.8, color: '#9a79dc' }, { key: 'closing', percent: 0.15, amount: 4.2, color: '#ff8222' }] },
+			ytd: { updatedAt: '2026-04-23T10:05:00', pipeline: 63.4, stages: [{ key: 'prospecting', percent: 0.14, amount: 8.9, color: '#2d8be8' }, { key: 'qualification', percent: 0.21, amount: 13.2, color: '#2bb9a9' }, { key: 'proposal', percent: 0.28, amount: 17.8, color: '#ffc12e' }, { key: 'negotiation', percent: 0.22, amount: 13.9, color: '#9a79dc' }, { key: 'closing', percent: 0.15, amount: 9.6, color: '#ff8222' }] }
+		};
+		const compactCurrencyFormatter = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: CURRENCY, notation: 'compact', maximumFractionDigits: CURRENCY === 'JPY' ? 0 : 1 });
+		const percentFormatter = new Intl.NumberFormat(LOCALE, { style: 'percent', maximumFractionDigits: 0 });
+		const timeFormatter = new Intl.DateTimeFormat(LOCALE, { hour: 'numeric', minute: '2-digit', hour12: HOUR12 });
+		const state = { selectedPeriod: 'current' };
+		function tr(key, vars = {}) { let text = t[key] || key; Object.entries(vars).forEach(([name, value]) => { text = text.replace(`\${${name}}`, value); }); return text; }
+		function applySBBrand() { let sbBrand = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim(); if (!sbBrand) { try { sbBrand = getComputedStyle(window.parent.document.documentElement).getPropertyValue('--sb-brand').trim(); } catch (error) { sbBrand = ''; } } if (sbBrand) document.documentElement.style.setProperty('--primary', sbBrand); }
+		function formatCurrency(value) { return compactCurrencyFormatter.format(value * 1000000); }
+		function render() {
+			const data = DATA[state.selectedPeriod];
+			document.title = t.title;
+			document.getElementById('title').textContent = t.title;
+			document.getElementById('total-label').textContent = t.total;
+			document.getElementById('updated-label').textContent = t.updatedLabel;
+			document.getElementById('updated-value').textContent = tr('updatedAt', { dayLabel: t.today, timeLabel: timeFormatter.format(new Date(data.updatedAt)) });
+			document.getElementById('link').firstChild.textContent = `${t.link} `;
+			document.getElementById('total').textContent = formatCurrency(data.pipeline);
+			const select = document.getElementById('period-select');
+			select.innerHTML = `<option value="current">${t.current}</option><option value="next">${t.next}</option><option value="ytd">${t.ytd}</option>`;
+			select.value = state.selectedPeriod;
+			let progress = 0;
+			document.getElementById('donut').style.background = `conic-gradient(${data.stages.map((stage) => { const start = progress * 100; progress += stage.percent; const end = progress * 100; return `${stage.color} ${start}% ${end}%`; }).join(', ')})`;
+			document.getElementById('legend').innerHTML = data.stages.map((stage) => `<div class="row"><span class="dot" style="background:${stage.color}"></span><span>${t[stage.key]}</span><span>${percentFormatter.format(stage.percent)} (${formatCurrency(stage.amount)})</span></div>`).join('');
+		}
+		document.getElementById('period-select').addEventListener('change', (event) => { state.selectedPeriod = event.target.value; render(); });
+		applySBBrand();
+		render();
+	</script>
+</body>
+</html>
