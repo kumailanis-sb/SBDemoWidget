@@ -412,11 +412,20 @@
 
 		.cw-legend-row {
 			display: grid;
-			grid-template-columns: auto 1fr auto;
+			grid-template-columns: auto minmax(96px, 1fr) auto;
 			gap: 12px;
 			align-items: center;
 			font-size: 14px;
 			font-weight: 700;
+		}
+
+		.cw-legend-label,
+		.cw-legend-value {
+			white-space: nowrap;
+		}
+
+		.cw-legend-value {
+			text-align: right;
 		}
 
 		.cw-dot {
@@ -1628,8 +1637,8 @@
 			legend.innerHTML = data.stageDistribution.map((stage) => `
 				<div class="cw-legend-row">
 					<span class="cw-dot" style="background:${stage.color}"></span>
-					<span>${t[stage.labelKey]}</span>
-					<span>${percentFormatter.format(stage.percent)} (${formatCurrencyMillions(stage.amount)})</span>
+					<span class="cw-legend-label">${t[stage.labelKey]}</span>
+					<span class="cw-legend-value">${percentFormatter.format(stage.percent)} (${formatCurrencyMillions(stage.amount)})</span>
 				</div>
 			`).join('');
 		}
