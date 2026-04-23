@@ -80,7 +80,7 @@
 
 		.cw-heading h1 {
 			margin: 0;
-			font-size: clamp(30px, 4vw, 54px);
+			font-size: clamp(24px, 3vw, 42px);
 			line-height: 1;
 			letter-spacing: -0.03em;
 		}
@@ -92,7 +92,7 @@
 			gap: 14px;
 			flex-wrap: wrap;
 			color: var(--text-muted);
-			font-size: 15px;
+			font-size: 14px;
 			font-weight: 600;
 		}
 
@@ -251,14 +251,14 @@
 		}
 
 		.cw-kpi-label {
-			font-size: 15px;
+			font-size: 14px;
 			font-weight: 700;
 			color: var(--text-muted);
 		}
 
 		.cw-kpi-value {
 			margin-top: 14px;
-			font-size: clamp(34px, 4vw, 54px);
+			font-size: clamp(28px, 3.2vw, 44px);
 			font-weight: 800;
 			line-height: 0.95;
 			letter-spacing: -0.04em;
@@ -271,7 +271,7 @@
 			gap: 14px;
 			flex-wrap: wrap;
 			color: var(--text-muted);
-			font-size: 15px;
+			font-size: 14px;
 			font-weight: 700;
 		}
 
@@ -291,8 +291,8 @@
 		}
 
 		.cw-kpi-icon {
-			width: 64px;
-			height: 64px;
+			width: 56px;
+			height: 56px;
 			border-radius: 999px;
 			display: inline-flex;
 			align-items: center;
@@ -301,8 +301,8 @@
 		}
 
 		.cw-kpi-icon svg {
-			width: 28px;
-			height: 28px;
+			width: 24px;
+			height: 24px;
 		}
 
 		.cw-kpi-icon.pipeline {
@@ -335,7 +335,7 @@
 
 		.cw-card-head h2,
 		.cw-card-head h3 {
-			font-size: 18px;
+			font-size: 16px;
 			font-weight: 800;
 		}
 
@@ -344,6 +344,7 @@
 			align-items: center;
 			gap: 8px;
 			color: var(--primary);
+			font-size: 14px;
 			font-weight: 800;
 			text-decoration: none;
 		}
@@ -359,14 +360,14 @@
 
 		.cw-donut-layout {
 			display: grid;
-			grid-template-columns: minmax(240px, 320px) 1fr;
-			gap: 28px;
+			grid-template-columns: minmax(200px, 260px) 1fr;
+			gap: 22px;
 			align-items: center;
-			min-height: 340px;
+			min-height: 280px;
 		}
 
 		.cw-donut {
-			width: min(300px, 100%);
+			width: min(240px, 100%);
 			aspect-ratio: 1;
 			border-radius: 50%;
 			margin: 0 auto;
@@ -378,7 +379,7 @@
 		.cw-donut::after {
 			content: '';
 			position: absolute;
-			inset: 24%;
+			inset: 25%;
 			background: var(--surface);
 			border-radius: 50%;
 			box-shadow: inset 0 0 0 1px var(--border);
@@ -388,25 +389,25 @@
 			position: relative;
 			z-index: 1;
 			text-align: center;
-			max-width: 130px;
+			max-width: 104px;
 		}
 
 		.cw-donut-center strong {
 			display: block;
-			font-size: 28px;
+			font-size: 22px;
 			font-weight: 800;
 			letter-spacing: -0.04em;
 		}
 
 		.cw-donut-center span {
 			color: var(--text-muted);
-			font-size: 13px;
+			font-size: 12px;
 			font-weight: 700;
 		}
 
 		.cw-legend {
 			display: grid;
-			gap: 18px;
+			gap: 14px;
 		}
 
 		.cw-legend-row {
@@ -414,7 +415,7 @@
 			grid-template-columns: auto 1fr auto;
 			gap: 12px;
 			align-items: center;
-			font-size: 16px;
+			font-size: 14px;
 			font-weight: 700;
 		}
 
@@ -455,7 +456,7 @@
 		.cw-risk-details strong,
 		.cw-insight-copy strong {
 			display: block;
-			font-size: 16px;
+			font-size: 15px;
 			font-weight: 800;
 			margin-bottom: 4px;
 		}
@@ -464,13 +465,13 @@
 		.cw-insight-copy span,
 		.cw-footnote {
 			color: var(--text-muted);
-			font-size: 14px;
+			font-size: 13px;
 			line-height: 1.4;
 		}
 
 		.cw-risk-amount {
 			text-align: right;
-			font-size: 15px;
+			font-size: 14px;
 			font-weight: 800;
 		}
 
@@ -481,7 +482,7 @@
 			margin-top: 8px;
 			padding: 6px 12px;
 			border-radius: 999px;
-			font-size: 14px;
+			font-size: 13px;
 			font-weight: 800;
 		}
 
@@ -516,12 +517,12 @@
 			padding: 14px 10px;
 			border-bottom: 1px solid var(--border);
 			text-align: left;
-			font-size: 15px;
+			font-size: 14px;
 		}
 
 		.cw-table th {
 			color: var(--text-muted);
-			font-size: 14px;
+			font-size: 13px;
 			font-weight: 800;
 		}
 
@@ -536,15 +537,15 @@
 		}
 
 		.cw-owner-photo {
-			width: 34px;
-			height: 34px;
+			width: 32px;
+			height: 32px;
 			border-radius: 50%;
 			background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 20%, white), color-mix(in srgb, var(--primary) 46%, white));
 			color: #10203f;
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
-			font-size: 13px;
+			font-size: 12px;
 			font-weight: 800;
 			box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.66);
 		}
