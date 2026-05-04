@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KFC Towers Promo - Weekly Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: linear-gradient(to bottom, #ffffff, #fafafa);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border: 2px solid #E41E3F;
+        }
+
+        .header {
+            background: linear-gradient(to right, #E41E3F, #c41535);
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 3px solid #000000;
+            position: relative;
+        }
+
+        .logo {
+            height: 60px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 100%;
+            width: auto;
+            max-width: 400px;
+        }
+
+        .brand {
+            font-size: 14px;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: #ffffff;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f0f0f0;
+            border-bottom: 1px solid #E41E3F;
+            padding: 0;
+            gap: 0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 18px 20px;
+            text-align: center;
+            background: #f0f0f0;
+            color: #666666;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 13px;
+            position: relative;
+            letter-spacing: 0.5px;
+        }
+
+        .tab:hover {
+            background: #e8e8e8;
+            color: #333333;
+        }
+
+        .tab.active {
+            background: #E41E3F;
+            color: white;
+            box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .content {
+            padding: 30px 20px;
+            color: #000000;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            color: #000000;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f8f8f8;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #E41E3F;
+            transition: all 0.3s ease;
+        }
+
+        .ranking-item:hover {
+            background: #efefef;
+            transform: translateX(5px);
+        }
+
+        .rank-number {
+            font-size: 32px;
+            font-weight: 900;
+            color: #E41E3F;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .rank-number.gold {
+            color: #ffd700;
+        }
+
+        .rank-number.silver {
+            color: #c0c0c0;
+        }
+
+        .rank-number.bronze {
+            color: #cd7f32;
+        }
+
+        .employee-info {
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .employee-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 4px;
+        }
+
+        .employee-role {
+            font-size: 13px;
+            color: #666666;
+        }
+
+        .employee-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: #E41E3F;
+            text-align: right;
+            min-width: 80px;
+        }
+
+        .comparison-container {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .comparison-box {
+            flex: 1;
+            padding: 25px;
+            background: #f8f8f8;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-box.highlight {
+            border: 3px solid #E41E3F;
+            transform: scale(1.05);
+        }
+
+        .comparison-label {
+            font-size: 14px;
+            color: #666666;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+
+        .comparison-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: #000000;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .comparison-value {
+            font-size: 48px;
+            font-weight: 900;
+            color: #E41E3F;
+        }
+
+        .prize-section {
+            background: #E41E3F;
+            padding: 20px;
+            text-align: center;
+            border-top: 3px solid #000000;
+            margin-top: 30px;
+        }
+
+        .prize-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            font-weight: 900;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .prize-title::before,
+        .prize-title::after {
+            content: '🏆';
+            margin: 0 8px;
+        }
+
+        .prize-description {
+            font-size: 16px;
+            color: #ffffff;
+            line-height: 1.5;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .vs-text {
+            color: #666666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="KFC-White-on-transparent-logo.png" alt="KFC Logo">
+            </div>
+            <div class="subtitle">Tower® Weekly Challenge</div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('attachment')">ATTACH %</button>
+            <button class="tab" onclick="switchTab('volume')">VOLUME #</button>
+            <button class="tab" onclick="switchTab('shift')">SHIFT VS SHIFT</button>
+        </div>
+
+        <div class="content">
+            <!-- Attachment Rate Tab -->
+            <div id="attachment" class="tab-content active">
+                <div class="section-title">ATTACHMENT RATE</div>
+                <div class="ranking-item">
+                    <div class="rank-number gold">1</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Nicole Adams</div>
+                        <div class="employee-role">Front Counter</div>
+                    </div>
+                    <div class="employee-value">18.5%</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="rank-number silver">2</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Patrick Anderson</div>
+                        <div class="employee-role">Drive-Thru Window</div>
+                    </div>
+                    <div class="employee-value">16.2%</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="rank-number bronze">3</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Maria Apathangelou</div>
+                        <div class="employee-role">Front Counter</div>
+                    </div>
+                    <div class="employee-value">15.8%</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="rank-number">4</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Mohammed Ashour</div>
+                        <div class="employee-role">Drive-Thru Window</div>
+                    </div>
+                    <div class="employee-value">14.3%</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="rank-number">5</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Marcus Barlow</div>
+                        <div class="employee-role">Front Counter</div>
+                    </div>
+                    <div class="employee-value">13.7%</div>
+                </div>
+            </div>
+
+            <!-- Volume Tab -->
+            <div id="volume" class="tab-content">
+                <div class="section-title">TOTAL PROMO VOLUME</div>
+                <div class="ranking-item">
+                    <div class="rank-number gold">1</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Davide Bonchamp</div>
+                        <div class="employee-role">Front Counter</div>
+                    </div>
+                    <div class="employee-value">127</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="rank-number silver">2</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Fred Duchamp</div>
+                        <div class="employee-role">Drive-Thru Window</div>
+                    </div>
+                    <div class="employee-value">115</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="rank-number bronze">3</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Henry Fitz</div>
+                        <div class="employee-role">Front Counter</div>
+                    </div>
+                    <div class="employee-value">108</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="rank-number">4</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Frank Fox</div>
+                        <div class="employee-role">Drive-Thru Window</div>
+                    </div>
+                    <div class="employee-value">92</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="rank-number">5</div>
+                    <div class="employee-info">
+                        <div class="employee-name">Ruby Gray</div>
+                        <div class="employee-role">Front Counter</div>
+                    </div>
+                    <div class="employee-value">87</div>
+                </div>
+            </div>
+
+            <!-- Shift vs Shift Tab -->
+            <div id="shift" class="tab-content">
+                <div class="section-title">DAY VS NIGHT SHIFT</div>
+                <div class="comparison-container">
+                    <div class="comparison-box">
+                        <div class="comparison-label">"The Morning Team"</div>
+                        <div class="comparison-title">DAY SHIFT</div>
+                        <div class="comparison-value">198</div>
+                    </div>
+                    <div style="display: flex; align-items: center; font-size: 32px; color: #666666;" class="vs-text">VS</div>
+                    <div class="comparison-box highlight">
+                        <div class="comparison-label">"The Evening Warriors"</div>
+                        <div class="comparison-title">NIGHT SHIFT</div>
+                        <div class="comparison-value">216</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="prize-section">
+                <div class="prize-title">WEEKLY PRIZE</div>
+                <div class="prize-description">1st Place wins a $50 Amazon Voucher + First pick of next week's shifts!</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
