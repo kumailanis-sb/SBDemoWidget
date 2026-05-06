@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KFC Bucket Blitz - Staffbase Widget</title>
+    <style>
+        :root {
+            --kfc-red: #e4002b;
+            --kfc-black: #101010;
+            --kfc-cream: #fff7f3;
+            --kfc-white: #ffffff;
+            --panel: #fff1ea;
+            --accent: #ffd166;
+            --muted: #6e6e6e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 18px 12px;
+            color: var(--kfc-black);
+            font-family: "Avenir Next Condensed", "Franklin Gothic Medium", "Arial Narrow", sans-serif;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(228, 0, 43, 0.15), transparent 45%),
+                radial-gradient(circle at 90% 10%, rgba(255, 209, 102, 0.2), transparent 40%),
+                repeating-linear-gradient(
+                    -24deg,
+                    #fff 0,
+                    #fff 18px,
+                    #fff6f6 18px,
+                    #fff6f6 36px
+                );
+        }
+
+        .widget-shell {
+            width: min(100%, 460px);
+            margin: 0 auto;
+            background: var(--kfc-white);
+            border-radius: 24px;
+            border: 2px solid rgba(228, 0, 43, 0.2);
+            box-shadow: 0 18px 34px rgba(16, 16, 16, 0.16);
+            overflow: hidden;
+        }
+
+        .hero {
+            background: linear-gradient(120deg, var(--kfc-red), #b1001f 70%);
+            color: var(--kfc-white);
+            padding: 16px 16px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.14);
+            right: -40px;
+            top: -55px;
+        }
+
+        .logo-wrap {
+            width: 124px;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-wrap img {
+            width: 100%;
+            display: block;
+            border-radius: 6px;
+            background: #fff;
+            padding: 4px;
+        }
+
+        .eyebrow,
+        .subtitle {
+            position: relative;
+            z-index: 1;
+        }
+
+        .eyebrow {
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        h1 {
+            position: relative;
+            z-index: 1;
+            margin: 6px 0 2px;
+            font-size: 38px;
+            line-height: 0.95;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            margin: 0;
+            font-size: 14px;
+            letter-spacing: 0.4px;
+            max-width: 300px;
+        }
+
+        .content {
+            padding: 14px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 2px solid rgba(228, 0, 43, 0.15);
+            border-radius: 18px;
+            padding: 14px;
+            animation: rise 240ms ease;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .lead-copy {
+            margin: 0 0 12px;
+            font-size: 15px;
+            color: #222;
+        }
+
+        .rules {
+            margin: 0 0 14px;
+            padding-left: 18px;
+            color: #222;
+            font-size: 14px;
+            line-height: 1.3;
+        }
+
+        .rules li + li {
+            margin-top: 6px;
+        }
+
+        .name-entry {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            border: 2px solid rgba(16, 16, 16, 0.18);
+            border-radius: 12px;
+            background: #fff;
+            color: #111;
+            padding: 10px 12px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        button {
+            border: 0;
+            border-radius: 12px;
+            padding: 11px 14px;
+            font-family: inherit;
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        button:hover {
+            filter: brightness(1.06);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--kfc-red);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #191919;
+            color: #fff;
+        }
+
+        .hud {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .hud-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 8px;
+            border: 2px solid rgba(228, 0, 43, 0.14);
+            text-align: center;
+        }
+
+        .hud-label {
+            margin: 0;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--muted);
+            letter-spacing: 0.9px;
+        }
+
+        .hud-value {
+            margin: 3px 0 0;
+            font-size: 26px;
+            line-height: 1;
+            font-weight: 800;
+        }
+
+        .arena {
+            position: relative;
+            height: 250px;
+            border-radius: 16px;
+            background:
+                linear-gradient(to top, #f8d7cd 0%, #ffece2 35%, #fff8f4 100%),
+                linear-gradient(to right, rgba(228, 0, 43, 0.04), rgba(228, 0, 43, 0));
+            border: 2px solid rgba(16, 16, 16, 0.08);
+            overflow: hidden;
+        }
+
+        .arena::before {
+            content: "TAP THE BUCKET";
+            position: absolute;
+            left: 50%;
+            top: 12px;
+            transform: translateX(-50%);
+            font-size: 12px;
+            letter-spacing: 1.3px;
+            color: rgba(16, 16, 16, 0.35);
+            font-weight: 700;
+        }
+
+        .target {
+            position: absolute;
+            width: 86px;
+            height: 86px;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            padding: 0;
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(228, 0, 43, 0.25);
+            touch-action: manipulation;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .target img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .score-flash {
+            position: absolute;
+            color: var(--kfc-red);
+            font-size: 22px;
+            font-weight: 800;
+            pointer-events: none;
+            animation: pop-fade 520ms ease forwards;
+        }
+
+        .result-head {
+            margin: 0;
+            font-size: 28px;
+            text-transform: uppercase;
+        }
+
+        .result-copy {
+            margin: 6px 0 12px;
+            font-size: 15px;
+        }
+
+        .table-wrap {
+            background: #fff;
+            border-radius: 13px;
+            border: 2px solid rgba(16, 16, 16, 0.08);
+            max-height: 280px;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 9px 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: #111;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.9px;
+            font-size: 11px;
+        }
+
+        tbody tr:nth-child(odd) {
+            background: #fffaf9;
+        }
+
+        tbody tr.current-player {
+            background: #ffe8b8;
+            font-weight: 800;
+        }
+
+        .medal {
+            width: 26px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .footer-note {
+            margin: 10px 2px 0;
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.3;
+        }
+
+        @keyframes pop-fade {
+            from {
+                transform: translateY(0) scale(0.85);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-20px) scale(1.06);
+                opacity: 0;
+            }
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (min-width: 700px) {
+            body {
+                padding: 28px 12px;
+            }
+
+            .widget-shell {
+                width: min(100%, 560px);
+            }
+
+            .arena {
+                height: 290px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="widget-shell">
+        <header class="hero">
+            <div class="logo-wrap">
+                <img src="https://commons.wikimedia.org/wiki/Special:FilePath/KFC%20Logo.svg" alt="KFC logo">
+            </div>
+            <p class="eyebrow">Frontline Challenge</p>
+            <h1>Bucket Blitz</h1>
+            <p class="subtitle">A quick-fire game for crew legends. Tap fast, stack points, climb the leaderboard.</p>
+        </header>
+
+        <section class="content">
+            <div class="panel" id="screen-intro">
+                <p class="lead-copy">Play a 30-second KFC speed run and lock in your spot on the weekly app leaderboard.</p>
+                <ul class="rules">
+                    <li>Tap the moving bucket before it jumps.</li>
+                    <li>Fast taps build combo points.</li>
+                    <li>Top score enters the KFC Tower board.</li>
+                </ul>
+                <div class="name-entry">
+                    <input id="player-name" type="text" maxlength="28" placeholder="Enter your display name">
+                    <button class="btn-primary" id="start-btn" type="button">Start Bucket Blitz</button>
+                </div>
+            </div>
+
+            <div class="panel hidden" id="screen-game">
+                <div class="hud">
+                    <div class="hud-card">
+                        <p class="hud-label">Time</p>
+                        <p class="hud-value" id="time-left">30</p>
+                    </div>
+                    <div class="hud-card">
+                        <p class="hud-label">Score</p>
+                        <p class="hud-value" id="score">0</p>
+                    </div>
+                    <div class="hud-card">
+                        <p class="hud-label">Streak</p>
+                        <p class="hud-value" id="streak">0</p>
+                    </div>
+                </div>
+
+                <div class="arena" id="arena">
+                    <button class="target" id="target" type="button" aria-label="tap target">
+                        <img src="https://thekfcmenu.com/wp-content/uploads/2025/11/12-Pc-Chicken-Only.webp" alt="KFC chicken target">
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel hidden" id="screen-results">
+                <h2 class="result-head">Leaderboard Locked In</h2>
+                <p class="result-copy" id="result-copy"></p>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body"></tbody>
+                    </table>
+                </div>
+
+                <button class="btn-secondary" id="play-again-btn" type="button" style="margin-top: 12px; width: 100%;">Play Again</button>
+                <p class="footer-note">Sample board includes your provided team names and demo players for testing.</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const namesFromList = [
+            "Nicole Adams", "Patrick Anderson", "Maria Apathangelou", "Mohammed Ashour", "Marcus Barlow",
+            "Davide Bonchamp", "Fred Duchamp", "Henry Fitz", "Frank Fox", "Ruby Gray", "Edward Hall",
+            "Ron Jacks", "Maya Kumar", "Thomas Lawrence", "Kay Lion", "Todd Lu", "Zsofia Lynn",
+            "Jan Morris", "Lutz Morrison", "Joel Riggs", "Elizabeth Rorke", "Kelsey Rupowski",
+            "Anne Ryder", "Elisa Simmons", "Miranda Smith", "Melanie Smithson", "Steven Thompson",
+            "Fiona Travis", "Martin Wolf"
+        ];
+
+        const sampleNames = ["Ava Chen", "Liam Patel", "Sofia Rivera", "Jordan Lee", "Noah Brooks", "Mila Carter"];
+
+        const introScreen = document.getElementById("screen-intro");
+        const gameScreen = document.getElementById("screen-game");
+        const resultScreen = document.getElementById("screen-results");
+        const playerNameInput = document.getElementById("player-name");
+        const startBtn = document.getElementById("start-btn");
+        const playAgainBtn = document.getElementById("play-again-btn");
+        const targetBtn = document.getElementById("target");
+        const arena = document.getElementById("arena");
+        const timeLeftEl = document.getElementById("time-left");
+        const scoreEl = document.getElementById("score");
+        const streakEl = document.getElementById("streak");
+        const leaderboardBody = document.getElementById("leaderboard-body");
+        const resultCopy = document.getElementById("result-copy");
+
+        let score = 0;
+        let streak = 0;
+        let timeLeft = 30;
+        let countdownTimer = null;
+        let moveTimer = null;
+        let currentPlayer = "Crew Member";
+        let lastTapAt = 0;
+        const MAX_LEADERBOARD_SCORE = 400;
+
+        function showScreen(screenEl) {
+            introScreen.classList.add("hidden");
+            gameScreen.classList.add("hidden");
+            resultScreen.classList.add("hidden");
+            screenEl.classList.remove("hidden");
+        }
+
+        function randomBetween(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function placeTarget() {
+            const arenaRect = arena.getBoundingClientRect();
+            const maxX = Math.max(8, arenaRect.width - targetBtn.offsetWidth - 8);
+            const maxY = Math.max(36, arenaRect.height - targetBtn.offsetHeight - 8);
+            const x = randomBetween(8, Math.floor(maxX));
+            const y = randomBetween(36, Math.floor(maxY));
+            targetBtn.style.left = x + "px";
+            targetBtn.style.top = y + "px";
+        }
+
+        function updateHud() {
+            scoreEl.textContent = String(score);
+            streakEl.textContent = String(streak);
+            timeLeftEl.textContent = String(timeLeft);
+        }
+
+        function flashPoints(x, y, points) {
+            const indicator = document.createElement("span");
+            indicator.className = "score-flash";
+            indicator.textContent = "+" + points;
+            indicator.style.left = x + "px";
+            indicator.style.top = y + "px";
+            arena.appendChild(indicator);
+            setTimeout(() => indicator.remove(), 520);
+        }
+
+        function getSeedLeaderboard() {
+            const combined = namesFromList.concat(sampleNames);
+            const items = combined.map((name, index) => {
+                const weighted = 120 + ((combined.length - index) * 5) + randomBetween(0, 70);
+                return { name: name, score: weighted };
+            });
+            return items
+                .map((entry) => ({ name: entry.name, score: Math.min(MAX_LEADERBOARD_SCORE, entry.score) }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 18);
+        }
+
+        function renderLeaderboard(playerEntry) {
+            const board = getSeedLeaderboard();
+            board.push(playerEntry);
+            board.sort((a, b) => b.score - a.score);
+
+            leaderboardBody.innerHTML = "";
+            board.slice(0, 20).forEach((entry, index) => {
+                const row = document.createElement("tr");
+                if (entry.name === playerEntry.name && entry.score === playerEntry.score) {
+                    row.classList.add("current-player");
+                }
+
+                let medal = "";
+                if (index === 0) {
+                    medal = "G";
+                } else if (index === 1) {
+                    medal = "S";
+                } else if (index === 2) {
+                    medal = "B";
+                }
+
+                row.innerHTML =
+                    "<td><span class='medal'>" + medal + "</span>" + (index + 1) + "</td>" +
+                    "<td>" + entry.name + "</td>" +
+                    "<td>" + entry.score + "</td>";
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        function stopGame() {
+            clearInterval(countdownTimer);
+            clearInterval(moveTimer);
+            countdownTimer = null;
+            moveTimer = null;
+
+            const playerEntry = { name: currentPlayer, score: score };
+            renderLeaderboard(playerEntry);
+            resultCopy.textContent = currentPlayer + ", you scored " + score + " points. Can you hit the top 3 next round?";
+            showScreen(resultScreen);
+        }
+
+        function startGame() {
+            const candidateName = playerNameInput.value.trim();
+            currentPlayer = candidateName ? candidateName : "Crew Member";
+
+            score = 0;
+            streak = 0;
+            timeLeft = 30;
+            lastTapAt = 0;
+            updateHud();
+            showScreen(gameScreen);
+            placeTarget();
+
+            moveTimer = setInterval(placeTarget, 900);
+
+            countdownTimer = setInterval(() => {
+                timeLeft -= 1;
+                updateHud();
+                if (timeLeft <= 0) {
+                    stopGame();
+                }
+            }, 1000);
+        }
+
+        targetBtn.addEventListener("click", (event) => {
+            const now = Date.now();
+            const delta = now - lastTapAt;
+            lastTapAt = now;
+
+            if (delta < 550) {
+                streak += 1;
+            } else {
+                streak = 1;
+            }
+
+            const basePoints = 10;
+            const speedBonus = delta < 350 ? 8 : delta < 550 ? 4 : 0;
+            const streakBonus = Math.min(14, streak * 2);
+            const points = basePoints + speedBonus + streakBonus;
+
+            score = Math.min(MAX_LEADERBOARD_SCORE, score + points);
+            updateHud();
+
+            const arenaRect = arena.getBoundingClientRect();
+            flashPoints(event.clientX - arenaRect.left, event.clientY - arenaRect.top, points);
+            placeTarget();
+        });
+
+        startBtn.addEventListener("click", () => {
+            if (countdownTimer || moveTimer) {
+                return;
+            }
+            startGame();
+        });
+
+        playerNameInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                startBtn.click();
+            }
+        });
+
+        playAgainBtn.addEventListener("click", () => {
+            showScreen(introScreen);
+            playerNameInput.focus();
+        });
+
+        showScreen(introScreen);
+    </script>
+</body>
+</html>
