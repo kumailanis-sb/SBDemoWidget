@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="widget-name" content="Coles Bakery Shift Swapper" />
+<meta name="widget-description" content="Coles Bakery team at Toowoomba Grand Central can post shifts for swap, browse available swaps, and request a swap directly from the widget. Multilanguage." />
+<title>Coles Bakery Shift Swapper</title>
+<style>
+  :root {
+    --coles-red: #E01A22;
+    --coles-red-dark: #B0141A;
+    --coles-yellow: #FFD400;
+    --bakery-cream: #FFF8EC;
+    --bakery-brown: #6B3F1D;
+    --ink: #1F2937;
+    --ink-soft: #4B5563;
+    --muted: #6B7280;
+    --line: #E5E7EB;
+    --bg: #FFFFFF;
+    --chip-bg: #FFF1E0;
+    --success: #16A34A;
+    --warning: #D97706;
+    --radius: 14px;
+    --shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+  }
+
+  .widget {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+  }
+
+  .header {
+    background: linear-gradient(135deg, var(--coles-red) 0%, var(--coles-red-dark) 100%);
+    color: #fff;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .header .logo {
+    width: 44px; height: 44px;
+    background: #fff; color: var(--coles-red);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .header h1 { margin: 0; font-size: 18px; font-weight: 700; }
+  .header p { margin: 2px 0 0; font-size: 12px; opacity: 0.9; }
+  .header .pill {
+    margin-left: auto;
+    background: var(--coles-yellow);
+    color: #1F2937;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .bakery-banner {
+    background: var(--bakery-cream);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--bakery-brown);
+  }
+  .bakery-banner .icon { font-size: 18px; }
+  .bakery-banner strong { color: var(--bakery-brown); }
+
+  .tabs { display: flex; border-bottom: 1px solid var(--line); background: #fff; }
+  .tab {
+    flex: 1; padding: 14px 12px; text-align: center;
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .tab:hover { background: #FAFAFA; }
+  .tab.active { color: var(--coles-red); border-bottom-color: var(--coles-red); }
+  .tab .count {
+    display: inline-block;
+    min-width: 18px; height: 18px; line-height: 18px;
+    padding: 0 6px; background: var(--coles-red);
+    color: #fff; border-radius: 999px;
+    font-size: 11px; margin-left: 6px; font-weight: 700;
+  }
+
+  .panel { display: none; padding: 16px 20px 22px; }
+  .panel.active { display: block; }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chip {
+    border: 1px solid var(--line); background: #fff;
+    color: var(--ink-soft); border-radius: 999px;
+    padding: 6px 12px; font-size: 12px;
+    cursor: pointer; font-weight: 600;
+    transition: all 0.15s;
+  }
+  .chip:hover { border-color: var(--coles-red); color: var(--coles-red); }
+  .chip.active { background: var(--coles-red); color: #fff; border-color: var(--coles-red); }
+
+  .shift-list { display: flex; flex-direction: column; gap: 10px; }
+  .shift-card {
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; background: #fff;
+    transition: box-shadow 0.15s;
+  }
+  .shift-card:hover { box-shadow: 0 4px 14px rgba(17,24,39,0.07); }
+  .shift-card .top {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; gap: 10px; margin-bottom: 8px;
+  }
+  .shift-card .who { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--coles-red); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; flex-shrink: 0;
+  }
+  .shift-card .name { font-weight: 700; font-size: 14px; }
+  .shift-card .role { font-size: 12px; color: var(--muted); }
+  .shift-card .urgency {
+    font-size: 11px; font-weight: 700;
+    padding: 4px 8px; border-radius: 6px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .urgency.high { background: #FEE2E2; color: #B91C1C; }
+  .urgency.medium { background: #FEF3C7; color: #92400E; }
+  .urgency.low { background: #DCFCE7; color: #166534; }
+
+  .shift-meta {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 8px 14px; margin: 10px 0; font-size: 13px;
+  }
+  .shift-meta .item { display: flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+  .shift-meta .item .ico { font-size: 14px; }
+
+  .task-chip {
+    display: inline-block;
+    background: var(--chip-bg); color: var(--bakery-brown);
+    border: 1px solid #F2D7B0;
+    padding: 3px 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; margin-right: 4px;
+  }
+  .reason {
+    font-size: 13px; color: var(--ink-soft);
+    background: #F9FAFB;
+    border-left: 3px solid var(--coles-yellow);
+    padding: 8px 10px; border-radius: 6px;
+    margin-top: 8px; font-style: italic;
+  }
+  .actions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn {
+    flex: 1; padding: 10px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; border: 1px solid transparent;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .btn-primary { background: var(--coles-red); color: #fff; }
+  .btn-primary:hover { background: var(--coles-red-dark); }
+  .btn-secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+  .btn-secondary:hover { border-color: var(--ink-soft); }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  label {
+    display: block; font-size: 12px; font-weight: 600;
+    margin-bottom: 5px; color: var(--ink-soft);
+  }
+  input, select, textarea {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 8px;
+    font-size: 14px; font-family: inherit;
+    color: var(--ink); background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--coles-red);
+    box-shadow: 0 0 0 3px rgba(224, 26, 34, 0.12);
+  }
+  input[readonly] { background: #F9FAFB; color: var(--ink-soft); cursor: not-allowed; }
+  textarea { resize: vertical; min-height: 70px; }
+
+  .checkbox-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .task-pick {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 10px; font-size: 12px;
+    cursor: pointer; background: #fff; user-select: none;
+  }
+  .task-pick input { width: auto; margin: 0; }
+  .task-pick.selected {
+    background: var(--chip-bg); border-color: #F2D7B0;
+    color: var(--bakery-brown); font-weight: 600;
+  }
+
+  .submit-row { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; }
+
+  .empty { text-align: center; padding: 28px 20px; color: var(--muted); font-size: 13px; }
+  .empty .big { font-size: 28px; margin-bottom: 6px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1F2937; color: #fff;
+    padding: 12px 18px; border-radius: 8px;
+    font-size: 13px; opacity: 0; pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--success); }
+
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(17,24,39,0.55);
+    display: none; align-items: center; justify-content: center;
+    z-index: 999; padding: 16px;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 12px;
+    max-width: 460px; width: 100%; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    background: var(--coles-red); color: #fff;
+    padding: 14px 18px; font-weight: 700; font-size: 15px;
+  }
+  .modal-body { padding: 18px; font-size: 14px; color: var(--ink-soft); }
+  .modal-body .highlight {
+    background: var(--bakery-cream); border: 1px solid #F2D7B0;
+    padding: 10px 12px; border-radius: 8px;
+    margin: 10px 0; color: var(--bakery-brown);
+  }
+  .modal-footer {
+    padding: 12px 18px; border-top: 1px solid var(--line);
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+  .modal-footer .btn { flex: 0 0 auto; min-width: 100px; }
+
+  @media (max-width: 520px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .shift-meta { grid-template-columns: 1fr; }
+    .tab { font-size: 12px; padding: 12px 6px; }
+    .header h1 { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="widget" id="widget">
+  <div class="header">
+    <div class="logo">C</div>
+    <div>
+      <h1 data-i18n="title">Coles Bakery Shift Swapper</h1>
+      <p data-i18n="subtitle">Post a swap, browse open shifts, help a teammate out</p>
+    </div>
+    <span class="pill" data-i18n="bakeryTeam">Bakery Team</span>
+  </div>
+
+  <div class="bakery-banner">
+    <span class="icon">🥖</span>
+    <span><strong data-i18n="bakerySpecific">Bakery-specific:</strong> <span data-i18n="bannerText">swaps must cover required tasks (e.g. Bread Bake-off, Pastry Proofing, Cake Decorating). Check task tags carefully.</span></span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="browse"><span data-i18n="tabBrowse">Open Swaps</span> <span class="count" id="open-count">0</span></div>
+    <div class="tab" data-tab="post" data-i18n="tabPost">Post a Swap</div>
+    <div class="tab" data-tab="mine"><span data-i18n="tabMine">My Requests</span> <span class="count" id="mine-count">0</span></div>
+  </div>
+
+  <div class="panel active" id="panel-browse">
+    <div class="filters" id="filters">
+      <div class="chip active" data-filter="all" data-i18n="filterAll">All</div>
+      <div class="chip" data-filter="Bread Bake-off" data-i18n="taskBread">Bread Bake-off</div>
+      <div class="chip" data-filter="Pastry Proofing" data-i18n="taskPastry">Pastry Proofing</div>
+      <div class="chip" data-filter="Cake Decorating" data-i18n="taskCake">Cake Decorating</div>
+      <div class="chip" data-filter="Counter Service" data-i18n="taskCounter">Counter Service</div>
+      <div class="chip" data-filter="Stocktake" data-i18n="taskStock">Stocktake</div>
+    </div>
+    <div class="shift-list" id="shift-list"></div>
+  </div>
+
+  <div class="panel" id="panel-post">
+    <form id="post-form" autocomplete="off">
+      <div class="form-grid">
+        <div>
+          <label for="f-name" data-i18n="lblName">Your name</label>
+          <input id="f-name" type="text" required data-i18n-placeholder="phName" placeholder="e.g. Ruby Gray" />
+        </div>
+        <div>
+          <label for="f-role" data-i18n="lblRole">Bakery role</label>
+          <select id="f-role" required>
+            <option value="" data-i18n="optSelect">Select…</option>
+            <option data-i18n="roleBaker">Baker</option>
+            <option data-i18n="rolePastry">Pastry Chef</option>
+            <option data-i18n="roleCake">Cake Decorator</option>
+            <option data-i18n="roleAssistant">Bakery Assistant</option>
+            <option data-i18n="roleLead">Bakery Team Leader</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-date" data-i18n="lblDate">Shift date</label>
+          <input id="f-date" type="date" required />
+        </div>
+        <div>
+          <label for="f-store" data-i18n="lblStore">Store</label>
+          <input id="f-store" type="text" required readonly value="Coles Toowoomba Grand Central" />
+        </div>
+        <div>
+          <label for="f-start" data-i18n="lblStart">Start time</label>
+          <input id="f-start" type="time" required value="04:00" />
+        </div>
+        <div>
+          <label for="f-end" data-i18n="lblEnd">End time</label>
+          <input id="f-end" type="time" required value="12:00" />
+        </div>
+        <div class="full">
+          <label data-i18n="lblTasks">Required bakery tasks (tick all that apply)</label>
+          <div class="checkbox-row" id="task-picker">
+            <label class="task-pick"><input type="checkbox" value="Bread Bake-off"> 🥖 <span data-i18n="taskBread">Bread Bake-off</span></label>
+            <label class="task-pick"><input type="checkbox" value="Pastry Proofing"> 🥐 <span data-i18n="taskPastry">Pastry Proofing</span></label>
+            <label class="task-pick"><input type="checkbox" value="Cake Decorating"> 🎂 <span data-i18n="taskCake">Cake Decorating</span></label>
+            <label class="task-pick"><input type="checkbox" value="Counter Service"> 🛒 <span data-i18n="taskCounter">Counter Service</span></label>
+            <label class="task-pick"><input type="checkbox" value="Stocktake"> 📦 <span data-i18n="taskStock">Stocktake</span></label>
+            <label class="task-pick"><input type="checkbox" value="Oven Cleaning"> 🧽 <span data-i18n="taskOven">Oven Cleaning</span></label>
+          </div>
+        </div>
+        <div>
+          <label for="f-urgency" data-i18n="lblUrgency">Urgency</label>
+          <select id="f-urgency" required>
+            <option value="low" data-i18n="urgLow">Low — happy to wait</option>
+            <option value="medium" selected data-i18n="urgMed">Medium — within a few days</option>
+            <option value="high" data-i18n="urgHigh">High — need cover ASAP</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-cert" data-i18n="lblCert">Cert required</label>
+          <select id="f-cert">
+            <option value="" data-i18n="certNone">None</option>
+            <option data-i18n="certFood">Food Safety Supervisor</option>
+            <option data-i18n="certAllergen">Allergen Handling</option>
+            <option data-i18n="certForklift">Forklift (back-of-house)</option>
+          </select>
+        </div>
+        <div class="full">
+          <label for="f-reason" data-i18n="lblReason">Reason for swap (optional)</label>
+          <textarea id="f-reason" data-i18n-placeholder="phReason" placeholder="e.g. Family commitment, medical appointment, training course…"></textarea>
+        </div>
+      </div>
+      <div class="submit-row">
+        <button type="button" class="btn btn-secondary" id="reset-form" data-i18n="btnClear">Clear</button>
+        <button type="submit" class="btn btn-primary" style="flex:0 0 auto;min-width:180px;" data-i18n="btnPost">Post Swap Request</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel" id="panel-mine">
+    <div class="shift-list" id="mine-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-header" data-i18n="modalTitle">Confirm Shift Swap</div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-cancel" data-i18n="btnCancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-confirm" data-i18n="btnConfirm">Confirm Swap</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===== Language detection =====
+  const LANG = (() => {
+    const l = navigator.language || '';
+    if (l.startsWith('de')) return 'de';
+    if (l.startsWith('fr')) return 'fr';
+    if (l.startsWith('es')) return 'es';
+    if (l.startsWith('ja')) return 'ja';
+    if (l === 'en-GB')      return 'en-GB';
+    return 'en-US';
+  })();
+  document.documentElement.lang = LANG;
+
+  const LOCALE = {
+    'de': 'de-DE', 'fr': 'fr-FR', 'es': 'es-ES',
+    'ja': 'ja-JP', 'en-GB': 'en-GB', 'en-US': 'en-US'
+  }[LANG];
+
+  // ===== Translations =====
+  const T = {
+    'en-US': {
+      title: 'Coles Bakery Shift Swapper',
+      subtitle: 'Post a swap, browse open shifts, help a teammate out',
+      bakeryTeam: 'Bakery Team',
+      bakerySpecific: 'Bakery-specific:',
+      bannerText: 'swaps must cover required tasks (e.g. Bread Bake-off, Pastry Proofing, Cake Decorating). Check task tags carefully.',
+      tabBrowse: 'Open Swaps', tabPost: 'Post a Swap', tabMine: 'My Requests',
+      filterAll: 'All',
+      taskBread: 'Bread Bake-off', taskPastry: 'Pastry Proofing', taskCake: 'Cake Decorating',
+      taskCounter: 'Counter Service', taskStock: 'Stocktake', taskOven: 'Oven Cleaning',
+      lblName: 'Your name', phName: 'e.g. Ruby Gray',
+      lblRole: 'Bakery role', optSelect: 'Select\u2026',
+      roleBaker: 'Baker', rolePastry: 'Pastry Chef', roleCake: 'Cake Decorator',
+      roleAssistant: 'Bakery Assistant', roleLead: 'Bakery Team Leader',
+      lblDate: 'Shift date', lblStore: 'Store',
+      lblStart: 'Start time', lblEnd: 'End time',
+      lblTasks: 'Required bakery tasks (tick all that apply)',
+      lblUrgency: 'Urgency',
+      urgLow: 'Low \u2014 happy to wait',
+      urgMed: 'Medium \u2014 within a few days',
+      urgHigh: 'High \u2014 need cover ASAP',
+      lblCert: 'Cert required', certNone: 'None',
+      certFood: 'Food Safety Supervisor', certAllergen: 'Allergen Handling', certForklift: 'Forklift (back-of-house)',
+      lblReason: 'Reason for swap (optional)',
+      phReason: 'e.g. Family commitment, medical appointment, training course\u2026',
+      btnClear: 'Clear', btnPost: 'Post Swap Request',
+      btnCancel: 'Cancel', btnConfirm: 'Confirm Swap',
+      modalTitle: 'Confirm Shift Swap',
+      modalIntro: 'You are requesting to take the following bakery shift:',
+      modalTasks: 'Tasks:',
+      modalApproval: "Your team leader will be notified and must approve the swap before it's final.",
+      statusPending: 'Pending Team Leader Approval',
+      statusPosted: 'Posted \u2014 awaiting taker',
+      labelStatus: 'Status:',
+      btnDetail: 'View detail', btnRequest: 'Request to take this shift',
+      btnCancelReq: 'Cancel request',
+      emptyBrowse: 'No open swaps match that filter.',
+      emptyMine: "You haven't requested or posted any swaps yet.",
+      toastSent: 'Swap request sent for approval',
+      toastCancelled: 'Request cancelled',
+      toastPosted: 'Shift posted to the bakery swap board',
+      toastTaskNeeded: 'Please select at least one bakery task',
+      urgencyHigh: 'High', urgencyMedium: 'Medium', urgencyLow: 'Low'
+    },
+    'en-GB': {
+      title: 'Coles Bakery Shift Swapper',
+      subtitle: 'Post a swap, browse open shifts, help a teammate out',
+      bakeryTeam: 'Bakery Team',
+      bakerySpecific: 'Bakery-specific:',
+      bannerText: 'swaps must cover required tasks (e.g. Bread Bake-off, Pastry Proofing, Cake Decorating). Check task tags carefully.',
+      tabBrowse: 'Open Swaps', tabPost: 'Post a Swap', tabMine: 'My Requests',
+      filterAll: 'All',
+      taskBread: 'Bread Bake-off', taskPastry: 'Pastry Proofing', taskCake: 'Cake Decorating',
+      taskCounter: 'Counter Service', taskStock: 'Stocktake', taskOven: 'Oven Cleaning',
+      lblName: 'Your name', phName: 'e.g. Ruby Gray',
+      lblRole: 'Bakery role', optSelect: 'Select\u2026',
+      roleBaker: 'Baker', rolePastry: 'Pastry Chef', roleCake: 'Cake Decorator',
+      roleAssistant: 'Bakery Assistant', roleLead: 'Bakery Team Leader',
+      lblDate: 'Shift date', lblStore: 'Store',
+      lblStart: 'Start time', lblEnd: 'End time',
+      lblTasks: 'Required bakery tasks (tick all that apply)',
+      lblUrgency: 'Urgency',
+      urgLow: 'Low \u2014 happy to wait',
+      urgMed: 'Medium \u2014 within a few days',
+      urgHigh: 'High \u2014 need cover ASAP',
+      lblCert: 'Cert required', certNone: 'None',
+      certFood: 'Food Safety Supervisor', certAllergen: 'Allergen Handling', certForklift: 'Forklift (back-of-house)',
+      lblReason: 'Reason for swap (optional)',
+      phReason: 'e.g. Family commitment, medical appointment, training course\u2026',
+      btnClear: 'Clear', btnPost: 'Post Swap Request',
+      btnCancel: 'Cancel', btnConfirm: 'Confirm Swap',
+      modalTitle: 'Confirm Shift Swap',
+      modalIntro: 'You are requesting to take the following bakery shift:',
+      modalTasks: 'Tasks:',
+      modalApproval: "Your team leader will be notified and must authorise the swap before it's final.",
+      statusPending: 'Pending Team Leader Approval',
+      statusPosted: 'Posted \u2014 awaiting taker',
+      labelStatus: 'Status:',
+      btnDetail: 'View detail', btnRequest: 'Request to take this shift',
+      btnCancelReq: 'Cancel request',
+      emptyBrowse: 'No open swaps match that filter.',
+      emptyMine: "You haven't requested or posted any swaps yet.",
+      toastSent: 'Swap request sent for approval',
+      toastCancelled: 'Request cancelled',
+      toastPosted: 'Shift posted to the bakery swap board',
+      toastTaskNeeded: 'Please select at least one bakery task',
+      urgencyHigh: 'High', urgencyMedium: 'Medium', urgencyLow: 'Low'
+    },
+    de: {
+      title: 'Coles B\u00e4ckerei Schichttausch',
+      subtitle: 'Schicht anbieten, offene Schichten ansehen, Kollegen helfen',
+      bakeryTeam: 'B\u00e4ckerei-Team',
+      bakerySpecific: 'B\u00e4ckerei-spezifisch:',
+      bannerText: 'Tauschpartner m\u00fcssen die erforderlichen Aufgaben \u00fcbernehmen (z. B. Brotbacken, Geb\u00e4ck-G\u00e4ren, Tortendekoration). Aufgaben-Tags pr\u00fcfen.',
+      tabBrowse: 'Offene T\u00e4usche', tabPost: 'Schicht anbieten', tabMine: 'Meine Anfragen',
+      filterAll: 'Alle',
+      taskBread: 'Brotbacken', taskPastry: 'Geb\u00e4ck-G\u00e4ren', taskCake: 'Tortendekoration',
+      taskCounter: 'Theke', taskStock: 'Inventur', taskOven: 'Ofenreinigung',
+      lblName: 'Dein Name', phName: 'z. B. Ruby Gray',
+      lblRole: 'B\u00e4ckerei-Rolle', optSelect: 'Ausw\u00e4hlen\u2026',
+      roleBaker: 'B\u00e4cker:in', rolePastry: 'Konditor:in', roleCake: 'Tortendekorateur:in',
+      roleAssistant: 'B\u00e4ckerei-Aushilfe', roleLead: 'B\u00e4ckerei-Teamleitung',
+      lblDate: 'Schichtdatum', lblStore: 'Filiale',
+      lblStart: 'Beginn', lblEnd: 'Ende',
+      lblTasks: 'Erforderliche Aufgaben (alle passenden ausw\u00e4hlen)',
+      lblUrgency: 'Dringlichkeit',
+      urgLow: 'Gering \u2014 kann warten',
+      urgMed: 'Mittel \u2014 in den n\u00e4chsten Tagen',
+      urgHigh: 'Hoch \u2014 sofortige Vertretung n\u00f6tig',
+      lblCert: 'Zertifikat erforderlich', certNone: 'Keines',
+      certFood: 'Lebensmittelsicherheits-Aufsicht', certAllergen: 'Allergen-Handhabung', certForklift: 'Gabelstapler (Lager)',
+      lblReason: 'Grund f\u00fcr den Tausch (optional)',
+      phReason: 'z. B. Familientermin, Arzttermin, Schulung\u2026',
+      btnClear: 'Zur\u00fccksetzen', btnPost: 'Schicht ver\u00f6ffentlichen',
+      btnCancel: 'Abbrechen', btnConfirm: 'Tausch best\u00e4tigen',
+      modalTitle: 'Schichttausch best\u00e4tigen',
+      modalIntro: 'Du m\u00f6chtest folgende B\u00e4ckerei-Schicht \u00fcbernehmen:',
+      modalTasks: 'Aufgaben:',
+      modalApproval: 'Deine Teamleitung wird benachrichtigt und muss den Tausch vor der endg\u00fcltigen Best\u00e4tigung freigeben.',
+      statusPending: 'Wartet auf Freigabe durch Teamleitung',
+      statusPosted: 'Ver\u00f6ffentlicht \u2014 wartet auf \u00dcbernahme',
+      labelStatus: 'Status:',
+      btnDetail: 'Details ansehen', btnRequest: 'Diese Schicht \u00fcbernehmen',
+      btnCancelReq: 'Anfrage zur\u00fcckziehen',
+      emptyBrowse: 'Keine offenen T\u00e4usche f\u00fcr diesen Filter.',
+      emptyMine: 'Du hast noch keine T\u00e4usche angefragt oder ver\u00f6ffentlicht.',
+      toastSent: 'Tauschanfrage zur Freigabe gesendet',
+      toastCancelled: 'Anfrage zur\u00fcckgezogen',
+      toastPosted: 'Schicht im B\u00e4ckerei-Tauschboard ver\u00f6ffentlicht',
+      toastTaskNeeded: 'Bitte mindestens eine B\u00e4ckerei-Aufgabe ausw\u00e4hlen',
+      urgencyHigh: 'Hoch', urgencyMedium: 'Mittel', urgencyLow: 'Gering'
+    },
+    fr: {
+      title: "Coles Boulangerie \u2014 \u00c9change de quart",
+      subtitle: "Proposez un \u00e9change, parcourez les quarts ouverts, aidez un coll\u00e8gue",
+      bakeryTeam: "\u00c9quipe Boulangerie",
+      bakerySpecific: "Sp\u00e9cifique boulangerie\u00a0:",
+      bannerText: "les \u00e9changes doivent couvrir les t\u00e2ches requises (p. ex. cuisson du pain, pousse des viennoiseries, d\u00e9coration de g\u00e2teaux). V\u00e9rifiez les \u00e9tiquettes de t\u00e2ches.",
+      tabBrowse: "\u00c9changes ouverts", tabPost: "Proposer un \u00e9change", tabMine: "Mes demandes",
+      filterAll: "Tout",
+      taskBread: "Cuisson du pain", taskPastry: "Pousse des viennoiseries", taskCake: "D\u00e9coration de g\u00e2teaux",
+      taskCounter: "Service au comptoir", taskStock: "Inventaire", taskOven: "Nettoyage du four",
+      lblName: "Votre nom", phName: "p. ex. Ruby Gray",
+      lblRole: "R\u00f4le en boulangerie", optSelect: "S\u00e9lectionner\u2026",
+      roleBaker: "Boulanger\u00b7\u00e8re", rolePastry: "P\u00e2tissier\u00b7\u00e8re", roleCake: "D\u00e9corateur\u00b7trice de g\u00e2teaux",
+      roleAssistant: "Assistant\u00b7e boulangerie", roleLead: "Chef d'\u00e9quipe boulangerie",
+      lblDate: "Date du quart", lblStore: "Magasin",
+      lblStart: "D\u00e9but", lblEnd: "Fin",
+      lblTasks: "T\u00e2ches requises (cocher toutes celles qui s'appliquent)",
+      lblUrgency: "Urgence",
+      urgLow: "Faible \u2014 peut attendre",
+      urgMed: "Moyenne \u2014 dans quelques jours",
+      urgHigh: "\u00c9lev\u00e9e \u2014 remplacement urgent",
+      lblCert: "Certification requise", certNone: "Aucune",
+      certFood: "Superviseur s\u00e9curit\u00e9 alimentaire", certAllergen: "Gestion des allerg\u00e8nes", certForklift: "Chariot \u00e9l\u00e9vateur (r\u00e9serve)",
+      lblReason: "Raison de l'\u00e9change (facultatif)",
+      phReason: "p. ex. engagement familial, rendez-vous m\u00e9dical, formation\u2026",
+      btnClear: "Effacer", btnPost: "Publier la demande",
+      btnCancel: "Annuler", btnConfirm: "Confirmer l'\u00e9change",
+      modalTitle: "Confirmer l'\u00e9change de quart",
+      modalIntro: "Vous demandez \u00e0 prendre le quart suivant\u00a0:",
+      modalTasks: "T\u00e2ches\u00a0:",
+      modalApproval: "Votre chef d'\u00e9quipe sera averti et devra approuver l'\u00e9change avant qu'il ne soit d\u00e9finitif.",
+      statusPending: "En attente d'approbation du chef d'\u00e9quipe",
+      statusPosted: "Publi\u00e9 \u2014 en attente d'un repreneur",
+      labelStatus: "Statut\u00a0:",
+      btnDetail: "Voir le d\u00e9tail", btnRequest: "Demander ce quart",
+      btnCancelReq: "Annuler la demande",
+      emptyBrowse: "Aucun \u00e9change ne correspond \u00e0 ce filtre.",
+      emptyMine: "Vous n'avez pas encore demand\u00e9 ni publi\u00e9 d'\u00e9change.",
+      toastSent: "Demande envoy\u00e9e pour approbation",
+      toastCancelled: "Demande annul\u00e9e",
+      toastPosted: "Quart publi\u00e9 sur le tableau d'\u00e9change",
+      toastTaskNeeded: "Veuillez s\u00e9lectionner au moins une t\u00e2che de boulangerie",
+      urgencyHigh: "\u00c9lev\u00e9e", urgencyMedium: "Moyenne", urgencyLow: "Faible"
+    },
+    es: {
+      title: "Intercambio de turnos \u2014 Panader\u00eda Coles",
+      subtitle: "Publica un turno, explora los disponibles y ayuda a un compa\u00f1ero",
+      bakeryTeam: "Equipo de Panader\u00eda",
+      bakerySpecific: "Espec\u00edfico de panader\u00eda:",
+      bannerText: "los intercambios deben cubrir las tareas requeridas (p. ej. horneado de pan, fermentaci\u00f3n de boller\u00eda, decoraci\u00f3n de tartas). Revisa las etiquetas de tareas.",
+      tabBrowse: "Turnos abiertos", tabPost: "Publicar turno", tabMine: "Mis solicitudes",
+      filterAll: "Todos",
+      taskBread: "Horneado de pan", taskPastry: "Fermentaci\u00f3n de boller\u00eda", taskCake: "Decoraci\u00f3n de tartas",
+      taskCounter: "Atenci\u00f3n al mostrador", taskStock: "Inventario", taskOven: "Limpieza del horno",
+      lblName: "Tu nombre", phName: "p. ej. Ruby Gray",
+      lblRole: "Rol en panader\u00eda", optSelect: "Seleccionar\u2026",
+      roleBaker: "Panadero/a", rolePastry: "Pastelero/a", roleCake: "Decorador/a de tartas",
+      roleAssistant: "Auxiliar de panader\u00eda", roleLead: "Responsable de panader\u00eda",
+      lblDate: "Fecha del turno", lblStore: "Tienda",
+      lblStart: "Inicio", lblEnd: "Fin",
+      lblTasks: "Tareas requeridas (marca todas las que apliquen)",
+      lblUrgency: "Urgencia",
+      urgLow: "Baja \u2014 puede esperar",
+      urgMed: "Media \u2014 en unos d\u00edas",
+      urgHigh: "Alta \u2014 cobertura urgente",
+      lblCert: "Certificaci\u00f3n requerida", certNone: "Ninguna",
+      certFood: "Supervisor de seguridad alimentaria", certAllergen: "Manejo de al\u00e9rgenos", certForklift: "Carretilla elevadora (almac\u00e9n)",
+      lblReason: "Motivo del intercambio (opcional)",
+      phReason: "p. ej. compromiso familiar, cita m\u00e9dica, formaci\u00f3n\u2026",
+      btnClear: "Borrar", btnPost: "Publicar solicitud",
+      btnCancel: "Cancelar", btnConfirm: "Confirmar intercambio",
+      modalTitle: "Confirmar intercambio de turno",
+      modalIntro: "Est\u00e1s solicitando cubrir el siguiente turno de panader\u00eda:",
+      modalTasks: "Tareas:",
+      modalApproval: "Tu responsable de equipo recibir\u00e1 una notificaci\u00f3n y deber\u00e1 aprobar el intercambio antes de que sea definitivo.",
+      statusPending: "Pendiente de aprobaci\u00f3n del responsable",
+      statusPosted: "Publicado \u2014 esperando relevo",
+      labelStatus: "Estado:",
+      btnDetail: "Ver detalle", btnRequest: "Solicitar este turno",
+      btnCancelReq: "Cancelar solicitud",
+      emptyBrowse: "Ning\u00fan intercambio coincide con ese filtro.",
+      emptyMine: "Todav\u00eda no has solicitado ni publicado intercambios.",
+      toastSent: "Solicitud enviada para aprobaci\u00f3n",
+      toastCancelled: "Solicitud cancelada",
+      toastPosted: "Turno publicado en el tabl\u00f3n de intercambios",
+      toastTaskNeeded: "Selecciona al menos una tarea de panader\u00eda",
+      urgencyHigh: "Alta", urgencyMedium: "Media", urgencyLow: "Baja"
+    },
+    ja: {
+      title: "Coles \u30d9\u30fc\u30ab\u30ea\u30fc \u30b7\u30d5\u30c8\u4ea4\u63db",
+      subtitle: "\u30b7\u30d5\u30c8\u3092\u6295\u7a3f\u30fb\u9583\u8868\u3092\u95b2\u89a7\u3057\u3066\u4ed1\u9593\u3092\u30b5\u30dd\u30fc\u30c8",
+      bakeryTeam: "\u30d9\u30fc\u30ab\u30ea\u30fc\u30c1\u30fc\u30e0",
+      bakerySpecific: "\u30d9\u30fc\u30ab\u30ea\u30fc\u56fa\u6709\uff1a",
+      bannerText: "\u4ea4\u63db\u306b\u306f\u5fc5\u8981\u306a\u4f5c\u696d\uff08\u4f8b\uff1a\u30d1\u30f3\u713c\u6210\u3001\u30da\u30b9\u30c8\u30ea\u30fc\u767a\u9175\u3001\u30b1\u30fc\u30ad\u30c7\u30b3\u30ec\u30fc\u30b7\u30e7\u30f3\uff09\u3092\u30ab\u30d0\u30fc\u3059\u308b\u5fc5\u8981\u304c\u3042\u308a\u307e\u3059\u3002\u30bf\u30b0\u3092\u3088\u304f\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
+      tabBrowse: "\u516c\u958b\u4e2d\u306e\u4ea4\u63db", tabPost: "\u30b7\u30d5\u30c8\u3092\u6295\u7a3f", tabMine: "\u30de\u30a4\u30ea\u30af\u30a8\u30b9\u30c8",
+      filterAll: "\u3059\u3079\u3066",
+      taskBread: "\u30d1\u30f3\u713c\u6210", taskPastry: "\u30da\u30b9\u30c8\u30ea\u30fc\u767a\u9175", taskCake: "\u30b1\u30fc\u30ad\u30c7\u30b3\u30ec\u30fc\u30b7\u30e7\u30f3",
+      taskCounter: "\u30ab\u30a6\u30f3\u30bf\u30fc\u63a5\u5ba2", taskStock: "\u68da\u5378\u3057", taskOven: "\u30aa\u30fc\u30d6\u30f3\u6e05\u6383",
+      lblName: "\u304a\u540d\u524d", phName: "\u4f8b\uff1aRuby Gray",
+      lblRole: "\u30d9\u30fc\u30ab\u30ea\u30fc\u5f79\u5272", optSelect: "\u9078\u629e\u2026",
+      roleBaker: "\u30d9\u30fc\u30ab\u30fc", rolePastry: "\u30d1\u30c6\u30a3\u30b7\u30a7", roleCake: "\u30b1\u30fc\u30ad\u30c7\u30b3\u30ec\u30fc\u30bf\u30fc",
+      roleAssistant: "\u30d9\u30fc\u30ab\u30ea\u30fc\u30a2\u30b7\u30b9\u30bf\u30f3\u30c8", roleLead: "\u30d9\u30fc\u30ab\u30ea\u30fc\u30c1\u30fc\u30e0\u30ea\u30fc\u30c0\u30fc",
+      lblDate: "\u30b7\u30d5\u30c8\u65e5", lblStore: "\u5e97\u8217",
+      lblStart: "\u958b\u59cb\u6642\u523b", lblEnd: "\u7d42\u4e86\u6642\u523b",
+      lblTasks: "\u5fc5\u8981\u306a\u4f5c\u696d\uff08\u8a72\u5f53\u3059\u308b\u3082\u306e\u3092\u3059\u3079\u3066\u9078\u629e\uff09",
+      lblUrgency: "\u7dca\u6025\u5ea6",
+      urgLow: "\u4f4e \u2014 \u3086\u3063\u304f\u308a\u3067OK",
+      urgMed: "\u4e2d \u2014 \u6570\u65e5\u4ee5\u5185",
+      urgHigh: "\u9ad8 \u2014 \u6025\u3044\u3067\u4ea4\u4ee3\u5fc5\u8981",
+      lblCert: "\u5fc5\u8981\u306a\u8cc7\u683c", certNone: "\u306a\u3057",
+      certFood: "\u98df\u54c1\u885b\u751f\u8cac\u4efb\u8005", certAllergen: "\u30a2\u30ec\u30eb\u30b2\u30f3\u5bfe\u5fdc", certForklift: "\u30d5\u30a9\u30fc\u30af\u30ea\u30d5\u30c8\uff08\u30d0\u30c3\u30af\u30e4\u30fc\u30c9\uff09",
+      lblReason: "\u4ea4\u63db\u306e\u7406\u7531\uff08\u4efb\u610f\uff09",
+      phReason: "\u4f8b\uff1a\u5bb6\u65cf\u306e\u7528\u4e8b\u3001\u901a\u9662\u3001\u7814\u4fee\u2026",
+      btnClear: "\u30af\u30ea\u30a2", btnPost: "\u4ea4\u63db\u3092\u6295\u7a3f",
+      btnCancel: "\u30ad\u30e3\u30f3\u30bb\u30eb", btnConfirm: "\u4ea4\u63db\u3092\u78ba\u5b9a",
+      modalTitle: "\u30b7\u30d5\u30c8\u4ea4\u63db\u306e\u78ba\u8a8d",
+      modalIntro: "\u4ee5\u4e0b\u306e\u30d9\u30fc\u30ab\u30ea\u30fc\u30b7\u30d5\u30c8\u3092\u5f15\u304d\u53d7\u3051\u308b\u30ea\u30af\u30a8\u30b9\u30c8\u3067\u3059\uff1a",
+      modalTasks: "\u4f5c\u696d\uff1a",
+      modalApproval: "\u30c1\u30fc\u30e0\u30ea\u30fc\u30c0\u30fc\u306b\u901a\u77e5\u3055\u308c\u3001\u627f\u8a8d\u5f8c\u306b\u4ea4\u63db\u304c\u78ba\u5b9a\u3057\u307e\u3059\u3002",
+      statusPending: "\u30c1\u30fc\u30e0\u30ea\u30fc\u30c0\u30fc\u627f\u8a8d\u5f85\u3061",
+      statusPosted: "\u6295\u7a3f\u6e08\u307f \u2014 \u5f15\u304d\u53d7\u3051\u624b\u3092\u5f85\u6a5f\u4e2d",
+      labelStatus: "\u30b9\u30c6\u30fc\u30bf\u30b9\uff1a",
+      btnDetail: "\u8a73\u7d30\u3092\u898b\u308b", btnRequest: "\u3053\u306e\u30b7\u30d5\u30c8\u3092\u5f15\u304d\u53d7\u3051\u308b",
+      btnCancelReq: "\u30ea\u30af\u30a8\u30b9\u30c8\u3092\u53d6\u308a\u6d88\u3059",
+      emptyBrowse: "\u3053\u306e\u30d5\u30a3\u30eb\u30bf\u30fc\u306b\u4e00\u81f4\u3059\u308b\u4ea4\u63db\u306f\u3042\u308a\u307e\u305b\u3093\u3002",
+      emptyMine: "\u307e\u3060\u30ea\u30af\u30a8\u30b9\u30c8\u3084\u6295\u7a3f\u306f\u3042\u308a\u307e\u305b\u3093\u3002",
+      toastSent: "\u4ea4\u63db\u30ea\u30af\u30a8\u30b9\u30c8\u3092\u627f\u8a8d\u7528\u306b\u9001\u4fe1\u3057\u307e\u3057\u305f",
+      toastCancelled: "\u30ea\u30af\u30a8\u30b9\u30c8\u3092\u53d6\u308a\u6d88\u3057\u307e\u3057\u305f",
+      toastPosted: "\u30d9\u30fc\u30ab\u30ea\u30fc\u4ea4\u63db\u30dc\u30fc\u30c9\u306b\u6295\u7a3f\u3057\u307e\u3057\u305f",
+      toastTaskNeeded: "\u30d9\u30fc\u30ab\u30ea\u30fc\u4f5c\u696d\u3092\u5c11\u306a\u304f\u3068\u3082\uff11\u3064\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044",
+      urgencyHigh: "\u9ad8", urgencyMedium: "\u4e2d", urgencyLow: "\u4f4e"
+    }
+  };
+  const t = T[LANG] || T['en-US'];
+
+  // Locale-suffix helper for data arrays
+  const LANG_SUFFIX = { 'de': 'De', 'fr': 'Fr', 'es': 'Es', 'ja': 'Ja', 'en-GB': '', 'en-US': '' };
+  function loc(obj, key) {
+    const suffix = LANG_SUFFIX[LANG] || '';
+    return (suffix ? obj[key + suffix] : undefined) || obj[key];
+  }
+
+  const dateFormatter = new Intl.DateTimeFormat(LOCALE, {
+    weekday: 'short', day: 'numeric', month: 'short'
+  });
+
+  // ===== Constants =====
+  const STORE_NAME = 'Coles Toowoomba Grand Central';
+  const STORAGE_KEY = 'coles_bakery_swaps_v2';
+  const MINE_KEY = 'coles_bakery_mine_v2';
+  const CURRENT_USER = 'You';
+
+  // ===== Seed data: 3 shifts, names from Custom Widget Names.txt =====
+  const seed = [
+    {
+      id: 'swap-1001',
+      name: 'Ruby Gray',
+      role: 'Baker', roleKey: 'roleBaker',
+      store: STORE_NAME,
+      date: nextDateISO(2),
+      start: '04:00', end: '12:00',
+      tasks: ['Bread Bake-off', 'Oven Cleaning'],
+      urgency: 'high',
+      cert: 'Food Safety Supervisor', certKey: 'certFood',
+      reason: "Need cover for the early bread bake-off \u2014 daughter has a school recital.",
+      reasonDe: 'Vertretung f\u00fcr das fr\u00fche Brotbacken n\u00f6tig \u2014 Tochter hat einen Schulauftritt.',
+      reasonFr: "Besoin d'un remplacement pour la cuisson du pain t\u00f4t le matin \u2014 spectacle scolaire de ma fille.",
+      reasonEs: 'Necesito relevo para el horneado de pan temprano \u2014 mi hija tiene una actuaci\u00f3n escolar.',
+      reasonJa: '\u65e9\u671d\u306e\u30d1\u30f3\u713c\u6210\u306e\u4ea4\u4ee3\u304c\u5fc5\u8981\u3067\u3059 \u2014 \u5a18\u306e\u5b66\u6821\u884c\u4e8b\u306e\u305f\u3081\u3002',
+      owner: 'Ruby Gray'
+    },
+    {
+      id: 'swap-1002',
+      name: 'Davide Bonchamp',
+      role: 'Pastry Chef', roleKey: 'rolePastry',
+      store: STORE_NAME,
+      date: nextDateISO(4),
+      start: '05:00', end: '11:30',
+      tasks: ['Pastry Proofing', 'Counter Service'],
+      urgency: 'medium',
+      cert: 'Allergen Handling', certKey: 'certAllergen',
+      reason: 'Medical appointment \u2014 croissant proofing must start by 5am sharp.',
+      reasonDe: 'Arzttermin \u2014 das G\u00e4ren der Croissants muss p\u00fcnktlich um 5 Uhr beginnen.',
+      reasonFr: "Rendez-vous m\u00e9dical \u2014 la pousse des croissants doit d\u00e9marrer \u00e0 5h pile.",
+      reasonEs: 'Cita m\u00e9dica \u2014 la fermentaci\u00f3n de croissants debe empezar a las 5:00 en punto.',
+      reasonJa: '\u901a\u9662\u306e\u305f\u3081 \u2014 \u30af\u30ed\u30ef\u30c3\u30b5\u30f3\u306e\u767a\u9175\u306f5\u6642\u6b63\u523b\u306b\u958b\u59cb\u5fc5\u9808\u3002',
+      owner: 'Davide Bonchamp'
+    },
+    {
+      id: 'swap-1003',
+      name: 'Maria Apathangelou',
+      role: 'Cake Decorator', roleKey: 'roleCake',
+      store: STORE_NAME,
+      date: nextDateISO(6),
+      start: '08:00', end: '16:00',
+      tasks: ['Cake Decorating', 'Counter Service'],
+      urgency: 'low',
+      cert: '', certKey: '',
+      reason: 'Two custom birthday cakes booked \u2014 needs a decorator confident with piping.',
+      reasonDe: 'Zwei Auftrags-Geburtstagstorten \u2014 erfordert sicheres Spritzbeutel-K\u00f6nnen.',
+      reasonFr: "Deux g\u00e2teaux d'anniversaire sur commande \u2014 d\u00e9corateur \u00e0 l'aise avec la poche \u00e0 douille.",
+      reasonEs: 'Dos tartas de cumplea\u00f1os por encargo \u2014 se necesita destreza con la manga pastelera.',
+      reasonJa: '\u30aa\u30fc\u30c0\u30fc\u30e1\u30a4\u30c9\u306e\u8a95\u751f\u65e5\u30b1\u30fc\u30ad2\u53f0 \u2014 \u30d1\u30a4\u30d4\u30f3\u30b0\u306b\u614e\u308c\u305f\u4eba\u304c\u5fc5\u8981\u3067\u3059\u3002',
+      owner: 'Maria Apathangelou'
+    }
+  ];
+
+  // ===== State =====
+  let swaps = loadSwaps();
+  let mine = loadMine();
+  let activeFilter = 'all';
+
+  // ===== Helpers =====
+  function nextDateISO(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+  function loadSwaps() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(seed)); } catch (e) {}
+    return seed.slice();
+  }
+  function saveSwaps() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(swaps)); } catch (e) {}
+  }
+  function loadMine() {
+    try {
+      const raw = localStorage.getItem(MINE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return [];
+  }
+  function saveMine() {
+    try { localStorage.setItem(MINE_KEY, JSON.stringify(mine)); } catch (e) {}
+  }
+  function initials(name) {
+    return name.split(/\s+/).map(n => n[0]).slice(0,2).join('').toUpperCase();
+  }
+  function fmtDate(iso) {
+    return dateFormatter.format(new Date(iso + 'T00:00:00'));
+  }
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+  function localisedRole(s) { return s.roleKey && t[s.roleKey] ? t[s.roleKey] : s.role; }
+  function localisedCert(s) { return s.certKey && t[s.certKey] ? t[s.certKey] : s.cert; }
+  function localisedTask(taskName) {
+    const map = {
+      'Bread Bake-off': 'taskBread',
+      'Pastry Proofing': 'taskPastry',
+      'Cake Decorating': 'taskCake',
+      'Counter Service': 'taskCounter',
+      'Stocktake': 'taskStock',
+      'Oven Cleaning': 'taskOven'
+    };
+    const key = map[taskName];
+    return (key && t[key]) ? t[key] : taskName;
+  }
+  function localisedUrgency(u) {
+    if (u === 'high') return t.urgencyHigh;
+    if (u === 'medium') return t.urgencyMedium;
+    return t.urgencyLow;
+  }
+  function localisedStatus(s) {
+    if (s.status === 'Pending Team Leader Approval') return t.statusPending;
+    if (s.status === 'Posted \u2014 awaiting taker') return t.statusPosted;
+    return s.status;
+  }
+
+  // ===== Apply static translations =====
+  function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (t[key]) el.textContent = t[key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.dataset.i18nPlaceholder;
+      if (t[key]) el.placeholder = t[key];
+    });
+    document.title = t.title;
+  }
+
+  // ===== Rendering =====
+  function renderBrowse() {
+    const list = document.getElementById('shift-list');
+    const filtered = swaps.filter(s =>
+      activeFilter === 'all' ? true : (s.tasks || []).includes(activeFilter)
+    );
+    document.getElementById('open-count').textContent = swaps.length;
+
+    if (!filtered.length) {
+      list.innerHTML =
+        '<div class="empty"><div class="big">\ud83e\udd50</div><div>' +
+        escapeHTML(t.emptyBrowse) + '</div></div>';
+      return;
+    }
+    list.innerHTML = filtered.map(s => cardHTML(s, { showRequest: true })).join('');
+    list.querySelectorAll('[data-request]').forEach(btn => {
+      btn.addEventListener('click', () => openModal(btn.dataset.request));
+    });
+  }
+
+  function renderMine() {
+    const list = document.getElementById('mine-list');
+    document.getElementById('mine-count').textContent = mine.length;
+    if (!mine.length) {
+      list.innerHTML =
+        '<div class="empty"><div class="big">\ud83d\udccb</div><div>' +
+        escapeHTML(t.emptyMine) + '</div></div>';
+      return;
+    }
+    list.innerHTML = mine.map(s => cardHTML(s, { mine: true })).join('');
+    list.querySelectorAll('[data-cancel]').forEach(btn => {
+      btn.addEventListener('click', () => cancelMine(btn.dataset.cancel));
+    });
+  }
+
+  function cardHTML(s, opts) {
+    opts = opts || {};
+    const tasks = (s.tasks || []).map(tn =>
+      '<span class="task-chip">' + escapeHTML(localisedTask(tn)) + '</span>'
+    ).join('');
+    const status = s.status
+      ? '<div class="role">' + escapeHTML(t.labelStatus) + ' <strong>' + escapeHTML(localisedStatus(s)) + '</strong></div>'
+      : '';
+    const certLine = s.cert
+      ? '<div class="item"><span class="ico">\ud83e\udeaa</span>' + escapeHTML(localisedCert(s)) + '</div>'
+      : '';
+    const reasonText = loc(s, 'reason');
+    const reason = reasonText
+      ? '<div class="reason">"' + escapeHTML(reasonText) + '"</div>'
+      : '';
+
+    let actions = '';
+    if (opts.showRequest) {
+      actions =
+        '<div class="actions">' +
+          '<button class="btn btn-secondary" type="button" data-request="' + s.id + '" data-info="1">' + escapeHTML(t.btnDetail) + '</button>' +
+          '<button class="btn btn-primary" type="button" data-request="' + s.id + '">' + escapeHTML(t.btnRequest) + '</button>' +
+        '</div>';
+    } else if (opts.mine) {
+      actions =
+        '<div class="actions">' +
+          '<button class="btn btn-secondary" type="button" data-cancel="' + s.id + '">' + escapeHTML(t.btnCancelReq) + '</button>' +
+        '</div>';
+    }
+
+    return (
+      '<div class="shift-card">' +
+        '<div class="top">' +
+          '<div class="who">' +
+            '<div class="avatar">' + initials(s.name) + '</div>' +
+            '<div>' +
+              '<div class="name">' + escapeHTML(s.name) + '</div>' +
+              '<div class="role">' + escapeHTML(localisedRole(s)) + ' \u2022 ' + escapeHTML(s.store) + '</div>' +
+              status +
+            '</div>' +
+          '</div>' +
+          '<span class="urgency ' + s.urgency + '">' + escapeHTML(localisedUrgency(s.urgency)) + '</span>' +
+        '</div>' +
+        '<div class="shift-meta">' +
+          '<div class="item"><span class="ico">\ud83d\udcc5</span>' + escapeHTML(fmtDate(s.date)) + '</div>' +
+          '<div class="item"><span class="ico">\u23f0</span>' + escapeHTML(s.start) + ' \u2013 ' + escapeHTML(s.end) + '</div>' +
+          certLine +
+        '</div>' +
+        '<div>' + tasks + '</div>' +
+        reason +
+        actions +
+      '</div>'
+    );
+  }
+
+  // ===== Tabs =====
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ===== Filters =====
+  document.getElementById('filters').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    document.querySelectorAll('#filters .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter = chip.dataset.filter;
+    renderBrowse();
+  });
+
+  // ===== Task picker visual selection =====
+  document.getElementById('task-picker').addEventListener('change', (e) => {
+    const label = e.target.closest('.task-pick');
+    if (!label) return;
+    label.classList.toggle('selected', e.target.checked);
+  });
+
+  // ===== Modal / request flow =====
+  let pendingSwapId = null;
+  function openModal(id) {
+    const s = swaps.find(x => x.id === id);
+    if (!s) return;
+    pendingSwapId = id;
+    document.getElementById('modal-body').innerHTML =
+      '<p>' + escapeHTML(t.modalIntro) + '</p>' +
+      '<div class="highlight">' +
+        '<strong>' + escapeHTML(s.name) + '</strong> \u2014 ' + escapeHTML(localisedRole(s)) + '<br>' +
+        escapeHTML(fmtDate(s.date)) + ' \u2022 ' + escapeHTML(s.start) + '\u2013' + escapeHTML(s.end) + '<br>' +
+        escapeHTML(s.store) + '<br>' +
+        escapeHTML(t.modalTasks) + ' ' + (s.tasks||[]).map(tn => escapeHTML(localisedTask(tn))).join(', ') +
+      '</div>' +
+      '<p>' + escapeHTML(t.modalApproval) + '</p>';
+    document.getElementById('modal').classList.add('show');
+  }
+  document.getElementById('modal-cancel').addEventListener('click', () => {
+    document.getElementById('modal').classList.remove('show');
+    pendingSwapId = null;
+  });
+  document.getElementById('modal-confirm').addEventListener('click', () => {
+    if (!pendingSwapId) return;
+    const idx = swaps.findIndex(x => x.id === pendingSwapId);
+    if (idx === -1) return;
+    const accepted = swaps.splice(idx, 1)[0];
+    accepted.status = 'Pending Team Leader Approval';
+    accepted.requestedBy = CURRENT_USER;
+    mine.unshift(accepted);
+    saveSwaps(); saveMine();
+    document.getElementById('modal').classList.remove('show');
+    pendingSwapId = null;
+    renderBrowse(); renderMine();
+    toast(t.toastSent, true);
+  });
+
+  function cancelMine(id) {
+    const idx = mine.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const item = mine.splice(idx, 1)[0];
+    delete item.status;
+    delete item.requestedBy;
+    if (item.owner !== CURRENT_USER) swaps.unshift(item);
+    saveSwaps(); saveMine();
+    renderBrowse(); renderMine();
+    toast(t.toastCancelled);
+  }
+
+  // ===== Post form =====
+  document.getElementById('post-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const tasks = Array.from(document.querySelectorAll('#task-picker input:checked')).map(i => i.value);
+    if (!tasks.length) { toast(t.toastTaskNeeded); return; }
+
+    const name = document.getElementById('f-name').value.trim();
+    const newSwap = {
+      id: 'swap-' + Date.now(),
+      name: name,
+      role: document.getElementById('f-role').value,
+      store: STORE_NAME,
+      date: document.getElementById('f-date').value,
+      start: document.getElementById('f-start').value,
+      end: document.getElementById('f-end').value,
+      tasks: tasks,
+      urgency: document.getElementById('f-urgency').value,
+      cert: document.getElementById('f-cert').value,
+      reason: document.getElementById('f-reason').value.trim(),
+      owner: CURRENT_USER,
+      status: 'Posted \u2014 awaiting taker'
+    };
+    swaps.unshift(newSwap);
+    saveSwaps();
+    mine.unshift(Object.assign({}, newSwap));
+    saveMine();
+
+    e.target.reset();
+    document.getElementById('f-store').value = STORE_NAME;
+    document.querySelectorAll('.task-pick.selected').forEach(l => l.classList.remove('selected'));
+    document.querySelector('.tab[data-tab="browse"]').click();
+    renderBrowse(); renderMine();
+    toast(t.toastPosted, true);
+  });
+
+  document.getElementById('reset-form').addEventListener('click', () => {
+    document.getElementById('post-form').reset();
+    document.getElementById('f-store').value = STORE_NAME;
+    document.querySelectorAll('.task-pick.selected').forEach(l => l.classList.remove('selected'));
+  });
+
+  // ===== Toast =====
+  let toastTimer;
+  function toast(msg, success) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.toggle('success', !!success);
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+  }
+
+  // ===== Init =====
+  applyTranslations();
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('f-date').min = today;
+  document.getElementById('f-date').value = today;
+
+  renderBrowse();
+  renderMine();
+})();
+</script>
+
+</body>
+</html>
