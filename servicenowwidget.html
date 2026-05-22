@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="widget-name" content="ServiceNow Inbox">
+    <meta name="widget-description" content="ServiceNow ticket inbox with My Items / My Tasks views, filters, sort, and new-ticket form. Multilanguage (DE / EN-GB / EN-US / FR / ES / JA).">
+    <title>ServiceNow Inbox</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --white: #ffffff;
+            --text-main: #1f2126;
+            --text-sub: #636b77;
+            --border-color: #d1d6df;
+            --badge-bg: #e6e8eb;
+            --badge-text: #42505e;
+            --primary-btn: #3c4650;
+            --accent-blue: #0f62fe;
+            --hover-bg: #f5f7f9;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #e0e4e8;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+        }
+
+        .plugin-window {
+            width: 400px;
+            height: 375px;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header { padding: 20px 20px 0 20px; flex-shrink: 0; }
+
+        .header-top {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+
+        .title-group h1 { font-size: 24px; margin: 0; font-weight: 800; display: inline-block; }
+
+        .view-select {
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            font-size: 16px; font-weight: 500; position: relative;
+            padding: 4px 8px; border-radius: 4px;
+        }
+        .view-select:hover { background: var(--hover-bg); }
+
+        .view-dropdown {
+            position: absolute; top: 35px; left: 0;
+            background: white; border: 1px solid var(--border-color);
+            border-radius: 6px; box-shadow: var(--shadow); width: 160px;
+            display: none; z-index: 100;
+        }
+        .view-dropdown.show { display: block; }
+
+        .icon-actions { display: flex; gap: 8px; }
+        .icon-btn {
+            background: #f1f2f4; border: none; width: 36px; height: 36px;
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-main); font-size: 14px;
+        }
+        .icon-btn:hover { background: #e0e2e6; }
+
+        .search-bar-row { display: flex; gap: 10px; margin-bottom: 10px; }
+
+        .search-input-wrap { flex: 1; position: relative; }
+        .search-input-wrap i {
+            position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+            color: var(--text-sub); font-size: 14px;
+        }
+        .search-input {
+            width: 100%; padding: 8px 8px 8px 32px;
+            border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px;
+        }
+
+        .filter-toggle {
+            background: none; border: none; color: var(--text-sub);
+            font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;
+            font-size: 14px;
+        }
+
+        .filter-panel {
+            display: none; flex-direction: column; gap: 10px;
+            padding-bottom: 15px; border-bottom: 1px solid #eee; margin-bottom: 10px;
+        }
+        .filter-panel.open { display: flex; }
+
+        .filter-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn-filter {
+            background: white; border: 1px solid var(--border-color);
+            padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: 500;
+            cursor: pointer; display: flex; align-items: center; gap: 6px;
+            color: var(--text-main);
+        }
+        .btn-filter:hover { background-color: var(--hover-bg); }
+
+        .dropdown-wrapper { position: relative; }
+
+        .custom-dropdown {
+            position: absolute; top: 35px; left: 0; background: white;
+            border: 1px solid var(--border-color); border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15); width: 240px;
+            display: none; z-index: 90; padding: 5px 0;
+        }
+        .custom-dropdown.show { display: block; }
+
+        .sort-option { padding: 8px 16px; cursor: pointer; font-size: 13px; }
+        .sort-option:hover { background-color: var(--hover-bg); }
+        .sort-option.selected { background-color: #f0f4ff; font-weight: 600; }
+
+        .type-search { padding: 8px; border-bottom: 1px solid #eee; }
+        .type-search input { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
+
+        .checkbox-item {
+            padding: 8px 12px; display: flex; align-items: center; gap: 8px;
+            font-size: 13px; cursor: pointer;
+        }
+        .checkbox-item:hover { background-color: var(--hover-bg); }
+        .checkbox-actions {
+            padding: 8px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;
+        }
+        .text-btn { border: none; background: none; color: var(--accent-blue); font-size: 12px; cursor: pointer; font-weight: 600; }
+
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px;
+            position: relative;
+        }
+
+        .ticket-item {
+            padding: 16px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;
+        }
+        .ticket-item:hover { background-color: #fafafa; }
+
+        .ticket-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .t-id { font-weight: 700; font-size: 14px; }
+        .t-badge { background: var(--badge-bg); color: var(--badge-text); font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+
+        .t-meta { font-size: 13px; margin-bottom: 4px; }
+        .priority-high { color: #8a6d3b; font-weight: 500; }
+        .priority-mod { color: var(--text-sub); }
+        .state-hold { color: #9c6f1c; font-weight: 500; }
+        .state-prog { color: var(--text-sub); }
+
+        .t-title { font-size: 14px; margin-bottom: 4px; line-height: 1.4; color: var(--text-main); }
+        .t-footer { font-size: 12px; color: var(--text-sub); }
+
+        .context-menu {
+            position: absolute; top: 60px; right: 20px; width: 180px;
+            background: white; border: 1px solid var(--border-color); border-radius: 6px;
+            box-shadow: var(--shadow); display: none; z-index: 200;
+        }
+        .context-menu.show { display: block; }
+        .menu-item { padding: 12px 16px; font-size: 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+        .menu-item:hover { background: var(--hover-bg); }
+
+        .overlay-view {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 300; display: none; flex-direction: column;
+            overflow-y: auto;
+        }
+        .overlay-view.active { display: flex; }
+
+        .notif-content {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; color: var(--text-main); padding: 20px;
+        }
+        .bell-large { font-size: 48px; color: #aeb5bc; margin-bottom: 20px; }
+        .notif-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .notif-desc { font-size: 14px; color: var(--text-sub); }
+
+        .form-padding { padding: 20px; }
+        .form-header { display: flex; align-items: center; margin-bottom: 20px; }
+        .back-btn { background: none; border: none; font-size: 18px; cursor: pointer; margin-right: 15px; color: var(--text-sub); }
+        .form-group { margin-bottom: 15px; }
+        .label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-sub); }
+        .input-control { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; }
+        .btn-submit { background: var(--text-main); color: white; width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="plugin-window">
+
+        <div class="header">
+            <div class="header-top">
+                <div class="title-group">
+                    <h1 data-i18n="inboxTitle">Inbox:</h1>
+                    <div style="position: relative; display: inline-block;">
+                        <div class="view-select" onclick="toggleViewDropdown()">
+                            <span id="currentViewLabel">My Items</span> <i class="fas fa-chevron-down" style="font-size: 12px;"></i>
+                        </div>
+                        <div class="view-dropdown" id="viewDropdown">
+                            <div class="menu-item" data-i18n="myItems" onclick="switchMainView('items')">My Items</div>
+                            <div class="menu-item" data-i18n="myTasks" onclick="switchMainView('tasks')">My Tasks</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="icon-actions">
+                    <button class="icon-btn" onclick="toggleNotifications()"><i class="fas fa-bell"></i></button>
+                    <button class="icon-btn" onclick="toggleContextMenu(event)"><i class="fas fa-ellipsis"></i></button>
+                </div>
+            </div>
+
+            <div class="context-menu" id="contextMenu">
+                <div class="menu-item" onclick="refreshList()"><i class="fas fa-sync-alt"></i> <span data-i18n="refresh">Refresh</span></div>
+                <div class="menu-item" onclick="openNewTicket()"><i class="fas fa-plus"></i> <span data-i18n="newTicket">New Ticket</span></div>
+            </div>
+
+            <div class="search-bar-row">
+                <div class="search-input-wrap">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" class="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search ..." onkeyup="renderList()">
+                </div>
+                <button class="filter-toggle" onclick="toggleFilterPanel()">
+                    <span data-i18n="filters">Filters</span> <i class="fas fa-chevron-down" id="filterArrow" style="font-size: 10px;"></i>
+                </button>
+            </div>
+
+            <div class="filter-panel" id="filterPanel">
+                <div class="filter-btn-row">
+                    <button class="btn-filter" data-i18n="showClosed">Show Closed Items</button>
+
+                    <div class="dropdown-wrapper">
+                        <button class="btn-filter" onclick="toggleDropdown('sortDropdown')">
+                            <i class="fas fa-sort"></i> <span id="sortLabel">Update Date (Newest)</span> <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                        </button>
+                        <div class="custom-dropdown" id="sortDropdown">
+                            <div class="sort-option selected" data-sort="update_new" onclick="setSort('update_new', this)">Update Date (Newest)</div>
+                            <div class="sort-option" data-sort="update_old" onclick="setSort('update_old', this)">Update Date (Oldest)</div>
+                            <div class="sort-option" data-sort="create_new" onclick="setSort('create_new', this)">Creation Date (Newest)</div>
+                            <div class="sort-option" data-sort="prio_high" onclick="setSort('prio_high', this)">Priority (Highest)</div>
+                            <div class="sort-option" data-sort="prio_low" onclick="setSort('prio_low', this)">Priority (Lowest)</div>
+                        </div>
+                    </div>
+
+                    <div class="dropdown-wrapper">
+                        <button class="btn-filter" onclick="toggleDropdown('typeDropdown')">
+                            <span data-i18n="types">Types</span> <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                        </button>
+                        <div class="custom-dropdown" id="typeDropdown" style="width: 220px;">
+                            <div class="type-search">
+                                <input type="text" data-i18n-placeholder="searchShort" placeholder="Search..." onclick="event.stopPropagation()">
+                            </div>
+                            <div class="checkbox-list">
+                                <label class="checkbox-item"><input type="checkbox" checked onchange="renderList()" value="Incident"> <span data-type-label="Incident">Incident</span></label>
+                                <label class="checkbox-item"><input type="checkbox" checked onchange="renderList()" value="Problem"> <span data-type-label="Problem">Problem</span></label>
+                                <label class="checkbox-item"><input type="checkbox" checked onchange="renderList()" value="Catalog Task"> <span data-type-label="Catalog Task">Catalog Task</span></label>
+                                <label class="checkbox-item"><input type="checkbox" checked onchange="renderList()" value="Change Request"> <span data-type-label="Change Request">Change Request</span></label>
+                            </div>
+                            <div class="checkbox-actions">
+                                <button class="text-btn" data-i18n="clearAll">Clear All</button>
+                                <button class="text-btn" data-i18n="apply">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="list-container" id="listContainer"></div>
+
+        <div class="overlay-view" id="notifView">
+            <div class="header form-padding">
+                <div class="form-header">
+                    <button class="back-btn" onclick="closeOverlay('notifView')"><i class="fas fa-arrow-left"></i></button>
+                    <h2 style="margin:0; font-size: 20px;" data-i18n="notifications">Notifications</h2>
+                </div>
+            </div>
+            <div class="notif-content">
+                <i class="fas fa-bell-slash bell-large"></i>
+                <div class="notif-title" data-i18n="noNotifTitle">No new notifications</div>
+                <div class="notif-desc" data-i18n="noNotifDesc">You will see new notifications here.</div>
+            </div>
+        </div>
+
+        <div class="overlay-view" id="newTicketView">
+            <div class="header form-padding">
+                <div class="form-header">
+                    <button class="back-btn" onclick="closeOverlay('newTicketView')"><i class="fas fa-arrow-left"></i></button>
+                    <h2 style="margin:0; font-size: 20px;" data-i18n="newTicket">New Ticket</h2>
+                </div>
+            </div>
+            <div class="form-padding" style="padding-top:0;">
+                <form id="ticketForm" onsubmit="submitTicket(event)">
+                    <div class="form-group">
+                        <label class="label" data-i18n="shortDesc">Short Description</label>
+                        <input type="text" id="ntTitle" class="input-control" data-i18n-placeholder="shortDescPh" placeholder="e.g. Printer not working" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="label" data-i18n="priority">Priority</label>
+                        <select id="ntPriority" class="input-control">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="label" data-i18n="type">Type</label>
+                        <select id="ntType" class="input-control">
+                            <option value="Incident">Incident</option>
+                            <option value="Request">Request</option>
+                            <option value="Problem">Problem</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-submit" data-i18n="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Language detection ---
+        const LANG = (() => {
+            const l = navigator.language || '';
+            if (l.startsWith('de')) return 'de';
+            if (l.startsWith('fr')) return 'fr';
+            if (l.startsWith('es')) return 'es';
+            if (l.startsWith('ja')) return 'ja';
+            if (l === 'en-GB')      return 'en-GB';
+            return 'en-US';
+        })();
+        document.documentElement.lang = LANG;
+
+        const LOCALE = {
+            'de': 'de-DE', 'fr': 'fr-FR', 'es': 'es-ES',
+            'ja': 'ja-JP', 'en-GB': 'en-GB', 'en-US': 'en-US'
+        }[LANG];
+
+        const HOUR12 = LANG === 'en-GB' || LANG === 'en-US';
+
+        // --- Translations ---
+        const T = {
+            'en-US': {
+                inboxTitle: "Inbox:",
+                myItems: "My Items", myTasks: "My Tasks",
+                searchPlaceholder: "Search ...", searchShort: "Search...",
+                filters: "Filters", showClosed: "Show Closed Items",
+                sortUpdateNew: "Update Date (Newest)", sortUpdateOld: "Update Date (Oldest)",
+                sortCreateNew: "Creation Date (Newest)",
+                sortPrioHigh: "Priority (Highest)", sortPrioLow: "Priority (Lowest)",
+                types: "Types", clearAll: "Clear All", apply: "Apply",
+                refresh: "Refresh", newTicket: "New Ticket",
+                notifications: "Notifications",
+                noNotifTitle: "No new notifications",
+                noNotifDesc: "You will see new notifications here.",
+                shortDesc: "Short Description", shortDescPh: "e.g. Printer not working",
+                priority: "Priority", type: "Type", submit: "Submit",
+                refreshing: "Refreshing...", noItems: "No items found",
+                updatedLabel: "Updated", openedLabel: "Opened", byLabel: "by",
+                prio1: "1 - Critical", prio2: "2 - High", prio3: "3 - Moderate", prio4: "4 - Low", prio5: "5 - Planning",
+                stateNew: "New", stateInProgress: "In Progress", stateOnHold: "On Hold", stateOpen: "Open",
+                typeIncident: "Incident", typeProblem: "Problem", typeCatalogTask: "Catalog Task",
+                typeChangeRequest: "Change Request", typeIncidentTask: "Incident Task", typeRequest: "Request"
+            },
+            'en-GB': {
+                inboxTitle: "Inbox:",
+                myItems: "My Items", myTasks: "My Tasks",
+                searchPlaceholder: "Search ...", searchShort: "Search...",
+                filters: "Filters", showClosed: "Show Closed Items",
+                sortUpdateNew: "Update Date (Newest)", sortUpdateOld: "Update Date (Oldest)",
+                sortCreateNew: "Creation Date (Newest)",
+                sortPrioHigh: "Priority (Highest)", sortPrioLow: "Priority (Lowest)",
+                types: "Types", clearAll: "Clear All", apply: "Apply",
+                refresh: "Refresh", newTicket: "New Ticket",
+                notifications: "Notifications",
+                noNotifTitle: "No new notifications",
+                noNotifDesc: "You will see new notifications here.",
+                shortDesc: "Short Description", shortDescPh: "e.g. Printer not working",
+                priority: "Priority", type: "Type", submit: "Submit",
+                refreshing: "Refreshing...", noItems: "No items found",
+                updatedLabel: "Updated", openedLabel: "Opened", byLabel: "by",
+                prio1: "1 - Critical", prio2: "2 - High", prio3: "3 - Moderate", prio4: "4 - Low", prio5: "5 - Planning",
+                stateNew: "New", stateInProgress: "In Progress", stateOnHold: "On Hold", stateOpen: "Open",
+                typeIncident: "Incident", typeProblem: "Problem", typeCatalogTask: "Catalogue Task",
+                typeChangeRequest: "Change Request", typeIncidentTask: "Incident Task", typeRequest: "Request"
+            },
+            de: {
+                inboxTitle: "Posteingang:",
+                myItems: "Meine Tickets", myTasks: "Meine Aufgaben",
+                searchPlaceholder: "Suchen ...", searchShort: "Suchen...",
+                filters: "Filter", showClosed: "Geschlossene anzeigen",
+                sortUpdateNew: "Aktualisierungsdatum (Neueste)", sortUpdateOld: "Aktualisierungsdatum (Älteste)",
+                sortCreateNew: "Erstellungsdatum (Neueste)",
+                sortPrioHigh: "Priorität (Höchste)", sortPrioLow: "Priorität (Niedrigste)",
+                types: "Typen", clearAll: "Alle löschen", apply: "Übernehmen",
+                refresh: "Aktualisieren", newTicket: "Neues Ticket",
+                notifications: "Benachrichtigungen",
+                noNotifTitle: "Keine neuen Benachrichtigungen",
+                noNotifDesc: "Neue Benachrichtigungen werden hier angezeigt.",
+                shortDesc: "Kurzbeschreibung", shortDescPh: "z. B. Drucker funktioniert nicht",
+                priority: "Priorität", type: "Typ", submit: "Absenden",
+                refreshing: "Wird aktualisiert...", noItems: "Keine Einträge gefunden",
+                updatedLabel: "Aktualisiert", openedLabel: "Eröffnet", byLabel: "von",
+                prio1: "1 – Kritisch", prio2: "2 – Hoch", prio3: "3 – Mittel", prio4: "4 – Niedrig", prio5: "5 – Planung",
+                stateNew: "Neu", stateInProgress: "In Bearbeitung", stateOnHold: "Wartend", stateOpen: "Offen",
+                typeIncident: "Vorfall", typeProblem: "Problem", typeCatalogTask: "Katalogaufgabe",
+                typeChangeRequest: "Änderungsantrag", typeIncidentTask: "Vorfallaufgabe", typeRequest: "Anfrage"
+            },
+            fr: {
+                inboxTitle: "Boîte de réception\u00a0:",
+                myItems: "Mes éléments", myTasks: "Mes tâches",
+                searchPlaceholder: "Rechercher ...", searchShort: "Rechercher...",
+                filters: "Filtres", showClosed: "Afficher les éléments clôturés",
+                sortUpdateNew: "Date de mise à jour (récente)", sortUpdateOld: "Date de mise à jour (ancienne)",
+                sortCreateNew: "Date de création (récente)",
+                sortPrioHigh: "Priorité (la plus haute)", sortPrioLow: "Priorité (la plus basse)",
+                types: "Types", clearAll: "Tout effacer", apply: "Appliquer",
+                refresh: "Actualiser", newTicket: "Nouveau ticket",
+                notifications: "Notifications",
+                noNotifTitle: "Aucune nouvelle notification",
+                noNotifDesc: "Les nouvelles notifications apparaîtront ici.",
+                shortDesc: "Brève description", shortDescPh: "ex. : imprimante en panne",
+                priority: "Priorité", type: "Type", submit: "Envoyer",
+                refreshing: "Actualisation...", noItems: "Aucun élément trouvé",
+                updatedLabel: "Mis à jour", openedLabel: "Ouvert", byLabel: "par",
+                prio1: "1 – Critique", prio2: "2 – Élevée", prio3: "3 – Modérée", prio4: "4 – Faible", prio5: "5 – Planification",
+                stateNew: "Nouveau", stateInProgress: "En cours", stateOnHold: "En attente", stateOpen: "Ouvert",
+                typeIncident: "Incident", typeProblem: "Problème", typeCatalogTask: "Tâche catalogue",
+                typeChangeRequest: "Demande de changement", typeIncidentTask: "Tâche d'incident", typeRequest: "Demande"
+            },
+            es: {
+                inboxTitle: "Bandeja de entrada:",
+                myItems: "Mis elementos", myTasks: "Mis tareas",
+                searchPlaceholder: "Buscar ...", searchShort: "Buscar...",
+                filters: "Filtros", showClosed: "Mostrar cerrados",
+                sortUpdateNew: "Fecha de actualización (más reciente)", sortUpdateOld: "Fecha de actualización (más antigua)",
+                sortCreateNew: "Fecha de creación (más reciente)",
+                sortPrioHigh: "Prioridad (más alta)", sortPrioLow: "Prioridad (más baja)",
+                types: "Tipos", clearAll: "Borrar todo", apply: "Aplicar",
+                refresh: "Actualizar", newTicket: "Nuevo ticket",
+                notifications: "Notificaciones",
+                noNotifTitle: "No hay notificaciones nuevas",
+                noNotifDesc: "Aquí verás las nuevas notificaciones.",
+                shortDesc: "Descripción breve", shortDescPh: "p. ej. la impresora no funciona",
+                priority: "Prioridad", type: "Tipo", submit: "Enviar",
+                refreshing: "Actualizando...", noItems: "No se encontraron elementos",
+                updatedLabel: "Actualizado", openedLabel: "Abierto", byLabel: "por",
+                prio1: "1 – Crítica", prio2: "2 – Alta", prio3: "3 – Moderada", prio4: "4 – Baja", prio5: "5 – Planificación",
+                stateNew: "Nuevo", stateInProgress: "En curso", stateOnHold: "En espera", stateOpen: "Abierto",
+                typeIncident: "Incidencia", typeProblem: "Problema", typeCatalogTask: "Tarea de catálogo",
+                typeChangeRequest: "Solicitud de cambio", typeIncidentTask: "Tarea de incidencia", typeRequest: "Solicitud"
+            },
+            ja: {
+                inboxTitle: "受信トレイ：",
+                myItems: "自分の項目", myTasks: "自分のタスク",
+                searchPlaceholder: "検索 ...", searchShort: "検索...",
+                filters: "フィルター", showClosed: "クローズ済みを表示",
+                sortUpdateNew: "更新日（新しい順）", sortUpdateOld: "更新日（古い順）",
+                sortCreateNew: "作成日（新しい順）",
+                sortPrioHigh: "優先度（高い順）", sortPrioLow: "優先度（低い順）",
+                types: "種別", clearAll: "すべてクリア", apply: "適用",
+                refresh: "更新", newTicket: "新規チケット",
+                notifications: "通知",
+                noNotifTitle: "新しい通知はありません",
+                noNotifDesc: "新しい通知はここに表示されます。",
+                shortDesc: "概要", shortDescPh: "例：プリンターが動かない",
+                priority: "優先度", type: "種別", submit: "送信",
+                refreshing: "更新中...", noItems: "項目が見つかりません",
+                updatedLabel: "更新", openedLabel: "起票", byLabel: "起票者",
+                prio1: "1 - 重大", prio2: "2 - 高", prio3: "3 - 中", prio4: "4 - 低", prio5: "5 - 計画中",
+                stateNew: "新規", stateInProgress: "対応中", stateOnHold: "保留", stateOpen: "オープン",
+                typeIncident: "インシデント", typeProblem: "問題", typeCatalogTask: "カタログタスク",
+                typeChangeRequest: "変更依頼", typeIncidentTask: "インシデントタスク", typeRequest: "リクエスト"
+            }
+        };
+        const t = T[LANG];
+
+        // --- Data-array locale helper ---
+        const LANG_SUFFIX = {
+            'de': 'De', 'fr': 'Fr', 'es': 'Es', 'ja': 'Ja',
+            'en-GB': '', 'en-US': ''
+        };
+        function loc(obj, key) {
+            const suffix = LANG_SUFFIX[LANG] || '';
+            return (suffix ? obj[key + suffix] : undefined) || obj[key];
+        }
+
+        // --- Data Mock (titles translatable via suffix twins) ---
+        const data = [
+            {
+                id: 'INC0000027', type: 'Incident', prio: 2, state: 'In Progress',
+                title: 'Please remove the latest hotfix from my PC',
+                titleDe: "Bitte den letzten Hotfix von meinem PC entfernen",
+                titleFr: "Veuillez retirer le dernier correctif de mon PC",
+                titleEs: "Por favor, elimina el último parche de mi PC",
+                titleJa: "最新のホットフィックスを PC から削除してください",
+                updated: '2025-10-15T05:57:00', created: '2025-10-14T10:00:00', cat: 'items'
+            },
+            {
+                id: 'INC0001990', type: 'Incident', prio: 5, state: 'On Hold',
+                title: 'Unable to access the personal details section in profile',
+                titleDe: "Zugriff auf den Bereich Persönliche Daten im Profil nicht möglich",
+                titleFr: "Impossible d'accéder à la section Données personnelles du profil",
+                titleEs: "No se puede acceder a la sección de datos personales del perfil",
+                titleJa: "プロフィールの個人情報セクションにアクセスできません",
+                updated: '2025-10-15T05:57:00', created: '2025-10-13T09:00:00', cat: 'items'
+            },
+            {
+                id: 'INC0000059', type: 'Incident', prio: 3, state: 'In Progress',
+                title: 'Unable to access team file share',
+                titleDe: "Zugriff auf Team-Dateifreigabe nicht möglich",
+                titleFr: "Impossible d'accéder au partage de fichiers de l'équipe",
+                titleEs: "No se puede acceder al recurso compartido del equipo",
+                titleJa: "チームのファイル共有にアクセスできません",
+                updated: '2025-10-15T05:57:00', created: '2025-10-12T14:30:00', cat: 'items'
+            },
+            {
+                id: 'TASK0022395', type: 'Incident Task', prio: 2, state: 'Open',
+                title: 'Connect with caller to run through our performance diagnostics tool',
+                titleDe: "Anrufer kontaktieren und Performance-Diagnose-Tool durchgehen",
+                titleFr: "Contacter l'appelant pour exécuter notre outil de diagnostic de performance",
+                titleEs: "Contactar al solicitante para ejecutar la herramienta de diagnóstico de rendimiento",
+                titleJa: "発信者と連絡を取り、パフォーマンス診断ツールを実行する",
+                updated: '2025-10-15T06:00:00', created: '2025-10-15T06:00:00', cat: 'tasks',
+                by: 'System Administrator',
+                byDe: 'Systemadministrator', byFr: "Administrateur système", byEs: 'Administrador del sistema', byJa: 'システム管理者'
+            },
+            {
+                id: 'INC0000088', type: 'Incident', prio: 4, state: 'New',
+                title: 'Mouse scroll wheel behaving erratically',
+                titleDe: "Mausrad verhält sich unregelmäßig",
+                titleFr: "La molette de la souris fonctionne de manière erratique",
+                titleEs: "La rueda del ratón se comporta de forma errática",
+                titleJa: "マウスのスクロールホイールの動作が不安定です",
+                updated: '2025-10-14T09:00:00', created: '2025-10-14T09:00:00', cat: 'items'
+            },
+            {
+                id: 'INC0000092', type: 'Incident', prio: 3, state: 'New',
+                title: 'VPN connection dropping intermittently',
+                titleDe: "VPN-Verbindung bricht zeitweise ab",
+                titleFr: "La connexion VPN se coupe par intermittence",
+                titleEs: "La conexión VPN se cae de forma intermitente",
+                titleJa: "VPN 接続が断続的に切断されます",
+                updated: '2025-10-13T14:00:00', created: '2025-10-13T14:00:00', cat: 'items'
+            }
+        ];
+
+        // --- Maps for state/type/priority labels ---
+        const STATE_KEY = {
+            'New': 'stateNew', 'In Progress': 'stateInProgress',
+            'On Hold': 'stateOnHold', 'Open': 'stateOpen'
+        };
+        const TYPE_KEY = {
+            'Incident': 'typeIncident', 'Problem': 'typeProblem',
+            'Catalog Task': 'typeCatalogTask', 'Change Request': 'typeChangeRequest',
+            'Incident Task': 'typeIncidentTask', 'Request': 'typeRequest'
+        };
+        function localState(s) { return t[STATE_KEY[s]] || s; }
+        function localType(ty) { return t[TYPE_KEY[ty]] || ty; }
+        function localPrio(p) { return t['prio' + p] || String(p); }
+
+        // --- State ---
+        let state = {
+            view: 'items',
+            sort: 'update_new',
+            filtersOpen: false
+        };
+
+        // --- Date formatting ---
+        const dateFormatter = new Intl.DateTimeFormat(LOCALE, {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hour12: HOUR12
+        });
+        function formatDate(isoStr) {
+            return dateFormatter.format(new Date(isoStr));
+        }
+
+        // --- Apply static translations ---
+        function applyTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (t[key]) el.textContent = t[key];
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.dataset.i18nPlaceholder;
+                if (t[key]) el.placeholder = t[key];
+            });
+            // Sort dropdown options
+            const sortMap = {
+                'update_new': 'sortUpdateNew', 'update_old': 'sortUpdateOld',
+                'create_new': 'sortCreateNew', 'prio_high': 'sortPrioHigh', 'prio_low': 'sortPrioLow'
+            };
+            document.querySelectorAll('.sort-option').forEach(el => {
+                const k = sortMap[el.dataset.sort];
+                if (t[k]) el.textContent = t[k];
+            });
+            // Type checkbox labels
+            document.querySelectorAll('[data-type-label]').forEach(el => {
+                el.textContent = localType(el.dataset.typeLabel);
+            });
+            // Initial header labels
+            document.getElementById('currentViewLabel').textContent = t.myItems;
+            document.getElementById('sortLabel').textContent = t.sortUpdateNew;
+            // Priority <option> texts
+            const prioSel = document.getElementById('ntPriority');
+            if (prioSel) {
+                Array.from(prioSel.options).forEach(o => {
+                    o.textContent = localPrio(o.value);
+                });
+            }
+            // Type <option> texts
+            const typeSel = document.getElementById('ntType');
+            if (typeSel) {
+                Array.from(typeSel.options).forEach(o => {
+                    o.textContent = localType(o.value);
+                });
+            }
+        }
+
+        // --- Render List ---
+        function renderList() {
+            const container = document.getElementById('listContainer');
+            container.innerHTML = '';
+
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const checkedTypes = Array.from(document.querySelectorAll('.checkbox-list input:checked')).map(cb => cb.value);
+
+            let filtered = data.filter(d => d.cat === state.view);
+
+            filtered = filtered.filter(d => {
+                const title = (loc(d, 'title') || '').toLowerCase();
+                return title.includes(searchTerm) || d.id.toLowerCase().includes(searchTerm);
+            });
+
+            if (state.view === 'items') {
+                filtered = filtered.filter(d => checkedTypes.includes(d.type));
+            }
+
+            filtered.sort((a, b) => {
+                const dateA = new Date(a.updated);
+                const dateB = new Date(b.updated);
+                const createA = new Date(a.created);
+                const createB = new Date(b.created);
+                switch (state.sort) {
+                    case 'update_new': return dateB - dateA;
+                    case 'update_old': return dateA - dateB;
+                    case 'create_new': return createB - createA;
+                    case 'prio_high': return a.prio - b.prio;
+                    case 'prio_low': return b.prio - a.prio;
+                    default: return dateB - dateA;
+                }
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:30px; color:#999">${t.noItems}</div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const prioLabel = localPrio(item.prio);
+                const prioColor = (item.prio <= 2) ? '#8a6d3b' : '#636b77';
+                const stateClass = item.state === 'On Hold' ? 'state-hold' : 'state-prog';
+
+                let footer = `${t.updatedLabel}: ${formatDate(item.updated)}`;
+                if (item.cat === 'tasks' && item.by) {
+                    const who = loc(item, 'by');
+                    footer = `${t.openedLabel}: ${formatDate(item.created)} ${t.byLabel} <span style="color:var(--accent-blue)">${who}</span>`;
+                }
+
+                const html = `
+                    <div class="ticket-item">
+                        <div class="ticket-header">
+                            <span class="t-id">${item.id}</span>
+                            <span class="t-badge">${localType(item.type)}</span>
+                        </div>
+                        <div class="t-meta">
+                            <span style="color:${prioColor}; font-weight:500;">${prioLabel}</span>
+                            <span> · </span>
+                            <span class="${stateClass}">${localState(item.state)}</span>
+                        </div>
+                        <div class="t-title">${loc(item, 'title')}</div>
+                        <div class="t-footer">${footer}</div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // --- Interaction ---
+        function switchMainView(view) {
+            state.view = view;
+            document.getElementById('currentViewLabel').textContent = view === 'items' ? t.myItems : t.myTasks;
+            document.getElementById('viewDropdown').classList.remove('show');
+            renderList();
+        }
+
+        function toggleViewDropdown() {
+            document.getElementById('viewDropdown').classList.toggle('show');
+        }
+
+        function toggleContextMenu(e) {
+            e.stopPropagation();
+            document.getElementById('contextMenu').classList.toggle('show');
+        }
+
+        function toggleNotifications() {
+            document.getElementById('notifView').classList.add('active');
+        }
+
+        function closeOverlay(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function toggleFilterPanel() {
+            const panel = document.getElementById('filterPanel');
+            const arrow = document.getElementById('filterArrow');
+            state.filtersOpen = !state.filtersOpen;
+            if (state.filtersOpen) {
+                panel.classList.add('open');
+                arrow.classList.remove('fa-chevron-down');
+                arrow.classList.add('fa-chevron-up');
+            } else {
+                panel.classList.remove('open');
+                arrow.classList.add('fa-chevron-down');
+                arrow.classList.remove('fa-chevron-up');
+            }
+        }
+
+        function toggleDropdown(id) {
+            document.querySelectorAll('.custom-dropdown').forEach(d => {
+                if (d.id !== id) d.classList.remove('show');
+            });
+            document.getElementById(id).classList.toggle('show');
+        }
+
+        function setSort(sortType, element) {
+            state.sort = sortType;
+            document.querySelectorAll('.sort-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('sortLabel').textContent = element.textContent;
+            document.getElementById('sortDropdown').classList.remove('show');
+            renderList();
+        }
+
+        function refreshList() {
+            const list = document.getElementById('listContainer');
+            list.innerHTML = `<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> ${t.refreshing}</div>`;
+            setTimeout(renderList, 800);
+            document.getElementById('contextMenu').classList.remove('show');
+        }
+
+        // --- New Ticket ---
+        function openNewTicket() {
+            document.getElementById('newTicketView').classList.add('active');
+            document.getElementById('contextMenu').classList.remove('show');
+        }
+
+        function submitTicket(e) {
+            e.preventDefault();
+            const title = document.getElementById('ntTitle').value;
+            const prioVal = parseInt(document.getElementById('ntPriority').value);
+            const type = document.getElementById('ntType').value;
+
+            const newItem = {
+                id: (type === 'Incident' ? 'INC' : 'REQ') + Math.floor(Math.random() * 1000000),
+                type: type,
+                prio: prioVal,
+                state: 'New',
+                title: title,
+                updated: new Date().toISOString(),
+                created: new Date().toISOString(),
+                cat: 'items'
+            };
+
+            data.unshift(newItem);
+            document.getElementById('ticketForm').reset();
+            closeOverlay('newTicketView');
+
+            if (state.view !== 'items') switchMainView('items');
+            else renderList();
+        }
+
+        // Close dropdowns on outside click
+        window.onclick = function (e) {
+            if (!e.target.closest('.view-select')) {
+                document.getElementById('viewDropdown').classList.remove('show');
+            }
+            if (!e.target.closest('.icon-actions') && !e.target.closest('.context-menu')) {
+                document.getElementById('contextMenu').classList.remove('show');
+            }
+            if (!e.target.closest('.dropdown-wrapper')) {
+                document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('show'));
+            }
+        };
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTranslations();
+            renderList();
+        });
+    </script>
+</body>
+</html>
