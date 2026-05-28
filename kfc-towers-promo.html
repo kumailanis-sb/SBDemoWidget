@@ -313,8 +313,8 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('volume')" data-i18n="tabSeller">SELLER #</button>
-            <button class="tab" onclick="switchTab('shift')" data-i18n="tabShiftVsShift">SHIFT VS SHIFT</button>
+            <button class="tab active" onclick="switchTab('volume', this)" data-i18n="tabSeller">SELLER #</button>
+            <button class="tab" onclick="switchTab('shift', this)" data-i18n="tabShiftVsShift">SHIFT VS SHIFT</button>
         </div>
 
         <div class="content">
@@ -389,9 +389,15 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/@staffbase/plugins-client-sdk" crossorigin></script>
+    <script src="https://unpkg.com/@staffbase/plugins-client-sdk@3.1.2/dist/plugins-client-sdk.umd.min.js" crossorigin></script>
     <script>
-        const PluginSDK = window['plugins-client-sdk'];
+        const PluginSDK =
+            window['plugins-client-sdk'] ||
+            window.pluginsClientSdk ||
+            window.pluginsClientSDK ||
+            window.Staffbase?.injected?.pluginsClientSdk ||
+            window.Staffbase?.pluginsClientSdk ||
+            null;
 
         const TRANSLATIONS = {
             en: {
@@ -486,11 +492,19 @@
                 return getUserContentLocale();
             }
 
-            const fallbackLocale = navigator.language || 'en_US';
-            return Promise.resolve(fallbackLocale.replace('-', '_'));
+            if (window.Staffbase?.injected?.pluginsClientSdk && typeof window.Staffbase.injected.pluginsClientSdk.getUserContentLocale === 'function') {
+                return window.Staffbase.injected.pluginsClientSdk.getUserContentLocale();
+            }
+
+            if (window.Staffbase?.platform?.language) {
+                return Promise.resolve(window.Staffbase.platform.language);
+            }
+
+            const fallbackLocale = document.documentElement.lang || navigator.language || 'en_US';
+            return Promise.resolve(String(fallbackLocale).replace('-', '_'));
         }
 
-        function switchTab(tabName) {
+        function switchTab(tabName, clickedTab) {
             // Hide all tab contents
             const contents = document.querySelectorAll('.tab-content');
             contents.forEach(content => {
@@ -507,12 +521,13 @@
             document.getElementById(tabName).classList.add('active');
 
             // Add active class to clicked tab
-            event.target.classList.add('active');
+            if (clickedTab) {
+                clickedTab.classList.add('active');
+            }
         }
 
         detectUserLocale()
             .then(function (locale) {
-                console.log(locale); // e.g. 'de_DE' or 'en_US'
                 applyLanguage(locale);
             })
             .catch(function () {
