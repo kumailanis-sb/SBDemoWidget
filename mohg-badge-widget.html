@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mandarin Oriental — Colleague Badge</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --oxblood: #5C1029;
+    --oxblood-deep: #3E0A1C;
+    --gold: #C6A15B;
+    --gold-soft: #E4D2A5;
+    --cream: #F7F1E4;
+    --ink: #241B1E;
+    --ink-soft: #6b5f61;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: radial-gradient(circle at 50% 20%, #2a1015, #140709 75%);
+    font-family:'Inter', sans-serif;
+    padding: 32px;
+  }
+
+  .badge-wrapper{
+    perspective: 1200px;
+  }
+
+  .card{
+    position:relative;
+    width: 360px;
+    background: linear-gradient(165deg, var(--cream) 0%, #fbf7ee 55%, var(--cream) 100%);
+    border-radius: 18px;
+    padding: 26px 26px 22px;
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.55),
+      0 2px 0 rgba(255,255,255,0.6) inset;
+    border: 1px solid rgba(198,161,91,0.35);
+    overflow:hidden;
+  }
+
+  /* signature element: radiating fan motif, echoing the fan silhouette
+     associated with the brand, rendered as an original abstract mark */
+  .fan-motif{
+    position:absolute;
+    top:-70px;
+    right:-70px;
+    width:200px;
+    height:200px;
+    opacity:0.09;
+    pointer-events:none;
+  }
+  .fan-motif svg{ width:100%; height:100%; }
+
+  .lock-badge{
+    position:absolute;
+    top:16px;
+    right:16px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(92,16,41,0.25);
+    background: rgba(255,255,255,0.6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    color: var(--oxblood);
+    transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    z-index: 3;
+  }
+  .lock-badge:hover{ transform: scale(1.06); }
+  .lock-badge.unlocked{
+    background: var(--oxblood);
+    color: var(--gold-soft);
+  }
+  .lock-badge svg{ width:16px; height:16px; }
+
+  .crest-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom: 4px;
+    position:relative;
+    z-index:2;
+  }
+
+  .brand-name{
+    font-family:'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 21px;
+    letter-spacing: 0.04em;
+    color: var(--oxblood-deep);
+  }
+
+  .brand-sub{
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-top: -2px;
+    margin-bottom: 16px;
+  }
+
+  .divider{
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 4px 0 18px;
+  }
+
+  .badge-tag{
+    display:inline-block;
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--oxblood);
+    background: rgba(198,161,91,0.18);
+    border: 1px solid rgba(198,161,91,0.5);
+    border-radius: 999px;
+    padding: 3px 10px;
+    margin-bottom: 14px;
+  }
+
+  .info-grid{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 18px;
+    position:relative;
+    z-index:2;
+  }
+
+  .info-fields{
+    flex: 1;
+    display:flex;
+    flex-direction:column;
+    gap: 11px;
+  }
+
+  .field{ display:flex; flex-direction:column; }
+
+  .field-label{
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 1px;
+  }
+
+  .field-value{
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+    transition: filter 0.25s ease;
+  }
+
+  .field-value.locked{
+    filter: blur(6px);
+    user-select:none;
+  }
+
+  .qr-area{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 6px;
+    margin-top: -22px;
+  }
+
+  .qr-frame{
+    width: 132px;
+    height: 132px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 7px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    transition: filter 0.25s ease;
+  }
+  .qr-frame.locked{ filter: blur(7px); }
+  .qr-frame img, .qr-frame canvas{ width:100%; height:100%; display:block; }
+
+  .qr-caption{
+    font-size: 8.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    transition: filter 0.25s ease;
+  }
+  .qr-caption.locked{ filter: blur(4px); }
+
+  .footer-strip{
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(92,16,41,0.25);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    position:relative;
+    z-index:2;
+  }
+
+  .footer-strip .prop{
+    color: var(--oxblood);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="badge-wrapper">
+  <div class="card">
+
+    <div class="fan-motif" aria-hidden="true">
+      <svg viewBox="0 0 200 200">
+        <g stroke="#5C1029" stroke-width="2" fill="none">
+          <path d="M100 190 L100 20"></path>
+          <path d="M100 190 L60 30"></path>
+          <path d="M100 190 L140 30"></path>
+          <path d="M100 190 L30 55"></path>
+          <path d="M100 190 L170 55"></path>
+          <path d="M100 190 L15 90"></path>
+          <path d="M100 190 L185 90"></path>
+        </g>
+      </svg>
+    </div>
+
+    <button class="lock-badge" id="lockBadge" aria-label="Tap to reveal details" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="lockIcon">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+    </button>
+
+    <div class="crest-row">
+      <div>
+        <div class="brand-name">Mandarin Oriental</div>
+        <div class="brand-sub">Hotel Group · Colleague Badge</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <span class="badge-tag">Colleague Access</span>
+
+    <div class="info-grid">
+      <div class="info-fields">
+        <div class="field">
+          <span class="field-label">Colleague ID</span>
+          <span class="field-value locked" data-field="employee">MOHG-118420</span>
+        </div>
+        <div class="field">
+          <span class="field-label">Property</span>
+          <span class="field-value locked" data-field="property">Mandarin Oriental, Hong Kong</span>
+        </div>
+      </div>
+
+      <div class="qr-area">
+        <div class="qr-frame locked" id="qrFrame"></div>
+        <div class="qr-caption locked" id="qrCaption">118420-MO</div>
+      </div>
+    </div>
+
+    <div class="footer-strip">
+      <span>Colleague Discounts &amp; Benefits</span>
+      <span class="prop">MOHG</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let isUnlocked = false;
+
+  const lockBadge = document.getElementById('lockBadge');
+  const lockIcon = document.getElementById('lockIcon');
+  const lockedFields = document.querySelectorAll('[data-field]');
+  const qrFrame = document.getElementById('qrFrame');
+  const qrCaption = document.getElementById('qrCaption');
+
+  // Generate a real, scannable QR code in place of the barcode
+  new QRCode(qrFrame, {
+    text: "MOHG-COLLEAGUE-118420",
+    width: 220,
+    height: 220,
+    colorDark: "#241B1E",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  function setUnlocked(unlocked){
+    isUnlocked = unlocked;
+    lockedFields.forEach(el => el.classList.toggle('locked', !unlocked));
+    qrFrame.classList.toggle('locked', !unlocked);
+    qrCaption.classList.toggle('locked', !unlocked);
+    lockBadge.classList.toggle('unlocked', unlocked);
+    lockBadge.setAttribute('aria-label', unlocked ? 'Tap to hide details' : 'Tap to reveal details');
+
+    lockIcon.innerHTML = unlocked
+      ? `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>`
+      : `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`;
+  }
+
+  lockBadge.addEventListener('click', () => setUnlocked(!isUnlocked));
+</script>
+
+</body>
+</html>
