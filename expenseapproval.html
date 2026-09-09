@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Expense Report</title>
+<style>
+  :root{
+    --primary: #FF5A36;
+    --ink: #1B2130;
+    --ink-soft: #6B7385;
+    --paper: #F7F8FA;
+    --card: #FFFFFF;
+    --rule: #E4E7EC;
+    --ok: #2E9E6B;
+    --pending: #E0A030;
+    --denied: #D8492F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; font-family: Arial, Helvetica, sans-serif;}
+  body{background:var(--paper); color:var(--ink); padding:20px;}
+
+  .er-card{
+    max-width:460px; margin:0 auto;
+    background:var(--card); border:1px solid var(--rule); border-radius:12px;
+    padding:20px 22px; box-shadow:0 1px 3px rgba(16,27,48,0.06);
+  }
+  .er-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;}
+  .er-title{font-size:1.05rem; font-weight:700;}
+  .er-sub{font-size:0.8rem; color:var(--ink-soft); margin-top:2px;}
+  .er-status{
+    font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:20px;
+    color:#fff; white-space:nowrap;
+  }
+  .status-pending{background:var(--pending);}
+  .status-approved{background:var(--ok);}
+  .status-denied{background:var(--denied);}
+
+  .er-person{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 0; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+    margin-bottom:14px;
+  }
+  .er-avatar{
+    width:40px; height:40px; border-radius:50%; background:var(--primary); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem;
+    flex-shrink:0;
+  }
+  .er-name{font-weight:600; font-size:0.95rem;}
+  .er-role{font-size:0.8rem; color:var(--ink-soft);}
+
+  .er-items{margin-bottom:14px;}
+  .er-item{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:7px 0; border-bottom:1px dashed var(--rule); font-size:0.85rem;
+  }
+  .er-item:last-child{border-bottom:none;}
+  .er-item-desc{color:var(--ink);}
+  .er-item-cat{color:var(--ink-soft); font-size:0.75rem; display:block; margin-top:1px;}
+  .er-item-amt{font-weight:600; white-space:nowrap; padding-left:10px;}
+
+  .er-total-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding-top:12px; margin-top:6px; border-top:1px solid var(--rule);
+    margin-bottom:16px;
+  }
+  .er-total-label{font-size:0.9rem; font-weight:700; color:var(--ink);}
+  .er-total-value{font-size:1.15rem; font-weight:700; color:var(--primary);}
+
+  .er-note{
+    background:var(--paper); border:1px solid var(--rule); border-radius:8px;
+    padding:10px 12px; font-size:0.85rem; color:var(--ink); margin-bottom:18px;
+  }
+
+  .er-actions{display:flex; gap:10px;}
+  .er-btn{
+    flex:1; padding:10px 0; border-radius:8px; border:none; font-size:0.88rem; font-weight:700;
+    cursor:pointer; transition:opacity 0.15s ease;
+  }
+  .er-btn:hover{opacity:0.88;}
+  .er-btn-approve{background:var(--ok); color:#fff;}
+  .er-btn-deny{background:#fff; color:var(--denied); border:1px solid var(--denied);}
+  .er-btn:disabled{opacity:0.5; cursor:default;}
+
+  .er-toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:8px 16px; border-radius:8px; font-size:0.82rem;
+    opacity:0; transition:all 0.25s ease; pointer-events:none;
+  }
+  .er-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+  <div class="er-card">
+    <div class="er-header">
+      <div>
+        <div class="er-title">Expense Report</div>
+        <div class="er-sub">Submitted 9 Sep 2026 &middot; Ref: EXP-2026-0913</div>
+      </div>
+      <div class="er-status status-pending" id="statusBadge">Pending</div>
+    </div>
+
+    <div class="er-person">
+      <div class="er-avatar">HF</div>
+      <div>
+        <div class="er-name">Henry Fitz</div>
+        <div class="er-role">Field Services</div>
+      </div>
+    </div>
+
+    <div class="er-items">
+      <div class="er-item">
+        <div>
+          <div class="er-item-desc">Site visit — Riverstone depot (35 km)</div>
+          <span class="er-item-cat">Mileage</span>
+        </div>
+        <div class="er-item-amt">$22.05</div>
+      </div>
+      <div class="er-item">
+        <div>
+          <div class="er-item-desc">Steel-cap boots (PPE replacement)</div>
+          <span class="er-item-cat">PPE</span>
+        </div>
+        <div class="er-item-amt">$149.00</div>
+      </div>
+      <div class="er-item">
+        <div>
+          <div class="er-item-desc">Client lunch — Box Hill site handover</div>
+          <span class="er-item-cat">Meals</span>
+        </div>
+        <div class="er-item-amt">$64.30</div>
+      </div>
+      <div class="er-item">
+        <div>
+          <div class="er-item-desc">Parking — Sydney CBD office day</div>
+          <span class="er-item-cat">Parking</span>
+        </div>
+        <div class="er-item-amt">$34.00</div>
+      </div>
+    </div>
+
+    <div class="er-total-row">
+      <div class="er-total-label">Total Claimed</div>
+      <div class="er-total-value">$269.35</div>
+    </div>
+
+    <div class="er-note">
+      4 items submitted for the period 1&ndash;8 Sep 2026. Receipts attached to original submission.
+    </div>
+
+    <div class="er-actions">
+      <button class="er-btn er-btn-approve" id="approveBtn" onclick="decide('approved')">Approve</button>
+      <button class="er-btn er-btn-deny" id="denyBtn" onclick="decide('denied')">Deny</button>
+    </div>
+  </div>
+
+  <div class="er-toast" id="toast"></div>
+
+<script>
+  function decide(outcome){
+    var badge = document.getElementById('statusBadge');
+    badge.className = 'er-status status-' + outcome;
+    badge.textContent = outcome === 'approved' ? 'Approved' : 'Denied';
+
+    document.getElementById('approveBtn').disabled = true;
+    document.getElementById('denyBtn').disabled = true;
+
+    showToast(outcome === 'approved'
+      ? "Henry Fitz's expense report has been approved."
+      : "Henry Fitz's expense report has been denied.");
+  }
+
+  function showToast(msg){
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    requestAnimationFrame(function(){ el.classList.add('show'); });
+    setTimeout(function(){ el.classList.remove('show'); }, 3000);
+  }
+</script>
+
+</body>
+</html>
