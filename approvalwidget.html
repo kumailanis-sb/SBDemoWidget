@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Leave Request</title>
+<style>
+  :root{
+    --primary: #FF5A36;
+    --ink: #1B2130;
+    --ink-soft: #6B7385;
+    --paper: #F7F8FA;
+    --card: #FFFFFF;
+    --rule: #E4E7EC;
+    --ok: #2E9E6B;
+    --pending: #E0A030;
+    --denied: #D8492F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; font-family: Arial, Helvetica, sans-serif;}
+  body{background:var(--paper); color:var(--ink); padding:20px;}
+
+  .lr-card{
+    max-width:420px; margin:0 auto;
+    background:var(--card); border:1px solid var(--rule); border-radius:12px;
+    padding:20px 22px; box-shadow:0 1px 3px rgba(16,27,48,0.06);
+  }
+  .lr-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;}
+  .lr-title{font-size:1.05rem; font-weight:700;}
+  .lr-sub{font-size:0.8rem; color:var(--ink-soft); margin-top:2px;}
+  .lr-status{
+    font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:20px;
+    color:#fff; white-space:nowrap;
+  }
+  .status-pending{background:var(--pending);}
+  .status-approved{background:var(--ok);}
+  .status-denied{background:var(--denied);}
+
+  .lr-person{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 0; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+    margin-bottom:14px;
+  }
+  .lr-avatar{
+    width:40px; height:40px; border-radius:50%; background:var(--primary); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem;
+    flex-shrink:0;
+  }
+  .lr-name{font-weight:600; font-size:0.95rem;}
+  .lr-role{font-size:0.8rem; color:var(--ink-soft);}
+
+  .lr-detail-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
+  .lr-detail-item .lr-label{font-size:0.72rem; color:var(--ink-soft); margin-bottom:3px;}
+  .lr-detail-item .lr-value{font-size:0.92rem; font-weight:600;}
+
+  .lr-note{
+    background:var(--paper); border:1px solid var(--rule); border-radius:8px;
+    padding:10px 12px; font-size:0.85rem; color:var(--ink); margin-bottom:18px;
+  }
+
+  .lr-actions{display:flex; gap:10px;}
+  .lr-btn{
+    flex:1; padding:10px 0; border-radius:8px; border:none; font-size:0.88rem; font-weight:700;
+    cursor:pointer; transition:opacity 0.15s ease;
+  }
+  .lr-btn:hover{opacity:0.88;}
+  .lr-btn-approve{background:var(--ok); color:#fff;}
+  .lr-btn-deny{background:#fff; color:var(--denied); border:1px solid var(--denied);}
+  .lr-btn:disabled{opacity:0.5; cursor:default;}
+
+  .lr-toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:8px 16px; border-radius:8px; font-size:0.82rem;
+    opacity:0; transition:all 0.25s ease; pointer-events:none;
+  }
+  .lr-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+  <div class="lr-card">
+    <div class="lr-header">
+      <div>
+        <div class="lr-title">Leave Request</div>
+        <div class="lr-sub">Submitted 9 Sep 2026 &middot; Ref: LR-2026-1142</div>
+      </div>
+      <div class="lr-status status-pending" id="statusBadge">Pending</div>
+    </div>
+
+    <div class="lr-person">
+      <div class="lr-avatar">JM</div>
+      <div>
+        <div class="lr-name">Jan Morris</div>
+        <div class="lr-role">eSpecs Contact Centre</div>
+      </div>
+    </div>
+
+    <div class="lr-detail-grid">
+      <div class="lr-detail-item">
+        <div class="lr-label">Leave Type</div>
+        <div class="lr-value">Annual Leave</div>
+      </div>
+      <div class="lr-detail-item">
+        <div class="lr-label">Duration</div>
+        <div class="lr-value">2 weeks (10 days)</div>
+      </div>
+      <div class="lr-detail-item">
+        <div class="lr-label">Start Date</div>
+        <div class="lr-value">Mon, 21 Sep 2026</div>
+      </div>
+      <div class="lr-detail-item">
+        <div class="lr-label">Return Date</div>
+        <div class="lr-value">Mon, 5 Oct 2026</div>
+      </div>
+    </div>
+
+    <div class="lr-note">
+      Requesting annual leave to cover the two-week period above. Cover has been discussed with the team lead.
+    </div>
+
+    <div class="lr-actions">
+      <button class="lr-btn lr-btn-approve" id="approveBtn" onclick="decide('approved')">Approve</button>
+      <button class="lr-btn lr-btn-deny" id="denyBtn" onclick="decide('denied')">Deny</button>
+    </div>
+  </div>
+
+  <div class="lr-toast" id="toast"></div>
+
+<script>
+  function decide(outcome){
+    var badge = document.getElementById('statusBadge');
+    badge.className = 'lr-status status-' + outcome;
+    badge.textContent = outcome === 'approved' ? 'Approved' : 'Denied';
+
+    document.getElementById('approveBtn').disabled = true;
+    document.getElementById('denyBtn').disabled = true;
+
+    showToast(outcome === 'approved'
+      ? "Jan Morris's leave request has been approved."
+      : "Jan Morris's leave request has been denied.");
+  }
+
+  function showToast(msg){
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    requestAnimationFrame(function(){ el.classList.add('show'); });
+    setTimeout(function(){ el.classList.remove('show'); }, 3000);
+  }
+</script>
+
+</body>
+</html>
