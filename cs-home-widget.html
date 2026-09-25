@@ -54,11 +54,6 @@
   }
   .csod-viewall:hover { color: var(--cs-orange-dark); }
 
-  /* ---- Carousel shell ---- */
-  .csod-carousel-shell {
-    position: relative;
-  }
-
   .csod-viewport {
     overflow: hidden;
     border-radius: 10px;
@@ -137,13 +132,19 @@
   .csod-progress-fill { height: 100%; background: var(--cs-orange); border-radius: 4px; }
   .csod-progress-pct { font-size: 12px; font-weight: 700; color: var(--ink); min-width: 32px; text-align: right; }
 
-  /* ---- Nav arrows ---- */
+  /* ---- Nav row: prev arrow — dots — next arrow, sits below the card ---- */
+  .csod-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0 2px;
+  }
+
   .csod-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 28px;
-    height: 28px;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     border: 1px solid var(--line);
     background: #fff;
@@ -151,21 +152,13 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    padding: 0;
   }
   .csod-arrow:hover { background: var(--cs-orange-wash); border-color: var(--cs-orange); }
-  .csod-arrow.prev { left: -10px; }
-  .csod-arrow.next { right: -10px; }
-  .csod-arrow svg { width: 14px; height: 14px; }
-  .csod-arrow[disabled] { opacity: 0; pointer-events: none; }
+  .csod-arrow svg { width: 13px; height: 13px; }
+  .csod-arrow[disabled] { opacity: .35; pointer-events: none; }
 
-  /* ---- Dots ---- */
-  .csod-dots {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin: 10px 0 2px;
-  }
+  .csod-dots { display: flex; align-items: center; gap: 6px; }
   .csod-dot {
     width: 6px;
     height: 6px;
@@ -223,7 +216,6 @@
   @media (max-width: 360px) {
     .csod-widget { padding: 16px; }
     .csod-thumb { width: 48px; height: 48px; }
-    .csod-arrow { display: none; } /* touch is primary control on small screens */
   }
 </style>
 </head>
@@ -362,19 +354,19 @@
       return;
     }
 
-    let html = '<div class="csod-carousel-shell">';
-    html += '<button class="csod-arrow prev" id="csodPrev" aria-label="Previous course">' + chevronSvg("prev") + "</button>";
-    html += '<div class="csod-viewport"><div class="csod-track" id="csodTrack">';
+    let html = '<div class="csod-viewport"><div class="csod-track" id="csodTrack">';
     courses.forEach(function (c) { html += '<div class="csod-slide">' + slideMarkup(c) + "</div>"; });
     html += "</div></div>";
-    html += '<button class="csod-arrow next" id="csodNext" aria-label="Next course">' + chevronSvg("next") + "</button>";
-    html += "</div>";
 
     if (courses.length > 1) {
+      html += '<div class="csod-nav-row">';
+      html += '<button class="csod-arrow prev" id="csodPrev" aria-label="Previous course">' + chevronSvg("prev") + "</button>";
       html += '<div class="csod-dots" id="csodDots">';
       courses.forEach(function (_, i) {
         html += '<button class="csod-dot' + (i === 0 ? " active" : "") + '" data-index="' + i + '" aria-label="Go to course ' + (i + 1) + '"></button>';
       });
+      html += "</div>";
+      html += '<button class="csod-arrow next" id="csodNext" aria-label="Next course">' + chevronSvg("next") + "</button>";
       html += "</div>";
     }
 
