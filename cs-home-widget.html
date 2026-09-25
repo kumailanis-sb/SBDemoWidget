@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Continue Learning — Cornerstone</title>
+<style>
+  :root {
+    --cs-orange: #FA4616;
+    --cs-orange-dark: #D93A0F;
+    --cs-orange-wash: #FFEFE9;
+    --ink: #1C1B1A;
+    --ink-soft: #57534E;
+    --line: #E8E3DE;
+    --card: #FFFFFF;
+    --track-bg: #F1ECE7;
+    --amber: #B9770E;
+    --amber-wash: #FDF3E1;
+  }
+
+  * { box-sizing: border-box; }
+
+  .csod-widget {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 22px 18px;
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .csod-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .csod-brand { display: flex; align-items: center; gap: 10px; }
+  .csod-brand img { width: 26px; height: 26px; display: block; }
+  .csod-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+  .csod-brand-text .label { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .csod-brand-text .sub { font-size: 11.5px; font-weight: 500; color: var(--ink-soft); }
+
+  .csod-viewall {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--cs-orange);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .csod-viewall:hover { color: var(--cs-orange-dark); }
+
+  /* ---- Carousel shell ---- */
+  .csod-carousel-shell {
+    position: relative;
+  }
+
+  .csod-viewport {
+    overflow: hidden;
+    border-radius: 10px;
+  }
+
+  .csod-track {
+    display: flex;
+    transition: transform 0.35s cubic-bezier(.22,.61,.36,1);
+    touch-action: pan-y;
+    cursor: grab;
+  }
+
+  .csod-track.dragging {
+    transition: none;
+    cursor: grabbing;
+  }
+
+  .csod-slide {
+    flex: 0 0 100%;
+    width: 100%;
+  }
+
+  .csod-card {
+    display: flex;
+    gap: 14px;
+    padding: 14px;
+    background: var(--track-bg);
+    border-radius: 10px;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .csod-thumb {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--cs-orange) 0%, #FF8A5C 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .csod-thumb svg { width: 24px; height: 24px; pointer-events: none; }
+
+  .csod-course-info { flex: 1; min-width: 0; }
+
+  .csod-course-title {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .csod-course-meta {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    min-height: 18px;
+  }
+
+  .csod-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+  .csod-badge.overdue { background: #FDE7E2; color: #C23A1E; }
+  .csod-badge.soon { background: var(--amber-wash); color: var(--amber); }
+
+  .csod-progress-row { display: flex; align-items: center; gap: 10px; }
+  .csod-progress-track { flex: 1; height: 6px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .csod-progress-fill { height: 100%; background: var(--cs-orange); border-radius: 4px; }
+  .csod-progress-pct { font-size: 12px; font-weight: 700; color: var(--ink); min-width: 32px; text-align: right; }
+
+  /* ---- Nav arrows ---- */
+  .csod-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .csod-arrow:hover { background: var(--cs-orange-wash); border-color: var(--cs-orange); }
+  .csod-arrow.prev { left: -10px; }
+  .csod-arrow.next { right: -10px; }
+  .csod-arrow svg { width: 14px; height: 14px; }
+  .csod-arrow[disabled] { opacity: 0; pointer-events: none; }
+
+  /* ---- Dots ---- */
+  .csod-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 10px 0 2px;
+  }
+  .csod-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--line);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .csod-dot.active { background: var(--cs-orange); width: 16px; border-radius: 3px; }
+
+  .csod-slide-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+  .csod-resume-btn {
+    appearance: none;
+    border: none;
+    background: var(--cs-orange);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .csod-resume-btn:hover { background: var(--cs-orange-dark); }
+  .csod-resume-btn:focus-visible { outline: 2px solid var(--cs-orange-dark); outline-offset: 2px; }
+
+  .csod-next {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+  .csod-next .left { color: var(--ink-soft); }
+  .csod-next .course-name { color: var(--ink); font-weight: 600; margin-left: 4px; }
+  .csod-next a { color: var(--cs-orange); font-weight: 600; text-decoration: none; white-space: nowrap; margin-left: 10px; }
+  .csod-next a:hover { color: var(--cs-orange-dark); }
+
+  .csod-empty {
+    text-align: center;
+    padding: 20px 10px 6px;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+  .csod-empty .check {
+    width: 32px; height: 32px; margin: 0 auto 8px;
+    border-radius: 50%; background: var(--cs-orange-wash);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  @media (max-width: 360px) {
+    .csod-widget { padding: 16px; }
+    .csod-thumb { width: 48px; height: 48px; }
+    .csod-arrow { display: none; } /* touch is primary control on small screens */
+  }
+</style>
+</head>
+<body>
+
+<div class="csod-widget" id="csodWidget">
+
+  <div class="csod-header">
+    <div class="csod-brand">
+      <img src="data:image/png;base64,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" alt="Cornerstone" />
+      <div class="csod-brand-text">
+        <span class="label">Continue learning</span>
+        <span class="sub">Powered by Cornerstone</span>
+      </div>
+    </div>
+    <a class="csod-viewall" href="#" id="csodViewAll">View all courses</a>
+  </div>
+
+  <div id="csodContent"><!-- populated by renderWidget() --></div>
+
+</div>
+
+<script>
+(function () {
+
+  /* ------------------------------------------------------------------
+   * DATA LAYER
+   * Replace fetchLearningData() with a real call to the Cornerstone
+   * Learning API (transcript / completion-statistics), proxied through
+   * your own backend so no Cornerstone auth token sits in this
+   * client-side widget. inProgress is now an ARRAY — one slide per
+   * course, swiped/paged through.
+   * ------------------------------------------------------------------ */
+
+  function fetchLearningData() {
+    return Promise.resolve({
+      inProgress: [
+        {
+          courseId: "CRS-10432",
+          title: "ACSC Essential Eight: Practical Implementation",
+          percentComplete: 62,
+          isMandatory: true,
+          dueDate: "2026-10-02",
+          courseUrl: "https://your-portal.csod.com/LMS/catalog/CRS-10432"
+        },
+        {
+          courseId: "CRS-10488",
+          title: "CDR Rules: Handling Consumer Data Requests",
+          percentComplete: 30,
+          isMandatory: true,
+          dueDate: "2026-11-15",
+          courseUrl: "https://your-portal.csod.com/LMS/catalog/CRS-10488"
+        },
+        {
+          courseId: "CRS-10513",
+          title: "Workplace Health & Safety Refresher",
+          percentComplete: 85,
+          isMandatory: false,
+          dueDate: null,
+          courseUrl: "https://your-portal.csod.com/LMS/catalog/CRS-10513"
+        }
+      ],
+      upNext: {
+        title: "Data Residency & Privacy Fundamentals",
+        courseUrl: "https://your-portal.csod.com/LMS/catalog/CRS-10501"
+      },
+      catalogUrl: "https://your-portal.csod.com/LMS/catalog"
+    });
+  }
+
+  function daysUntil(dateStr) {
+    const due = new Date(dateStr + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.round((due - today) / 86400000);
+  }
+
+  function dueBadge(dueDate, isMandatory) {
+    if (!dueDate || !isMandatory) return "";
+    const d = daysUntil(dueDate);
+    if (d < 0) return '<span class="csod-badge overdue">Overdue</span>';
+    if (d <= 7) return '<span class="csod-badge soon">Due in ' + d + 'd</span>';
+    return "";
+  }
+
+  function courseIconSvg() {
+    return '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M4 5.5C4 4.67 4.67 4 5.5 4H15l5 5v9.5c0 .83-.67 1.5-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>' +
+      '<path d="M14.5 4v4.5a1 1 0 0 0 1 1H20" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>' +
+      "</svg>";
+  }
+
+  function checkIconSvg() {
+    return '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M5 13l4 4L19 7" stroke="#FA4616" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      "</svg>";
+  }
+
+  function chevronSvg(dir) {
+    const d = dir === "prev" ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7";
+    return '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="' + d + '" stroke="#1C1B1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function slideMarkup(c) {
+    const badge = dueBadge(c.dueDate, c.isMandatory);
+    let html = '<div class="csod-card">';
+    html += '<div class="csod-thumb">' + courseIconSvg() + "</div>";
+    html += '<div class="csod-course-info">';
+    html += '<p class="csod-course-title">' + c.title + "</p>";
+    html += '<div class="csod-course-meta">' + badge + "</div>";
+    html += '<div class="csod-progress-row">';
+    html += '<div class="csod-progress-track"><div class="csod-progress-fill" style="width:' + c.percentComplete + '%"></div></div>';
+    html += '<span class="csod-progress-pct">' + c.percentComplete + "%</span>";
+    html += "</div>";
+    html += '<div class="csod-slide-actions">';
+    html += '<button class="csod-resume-btn" data-course-url="' + c.courseUrl + '">Resume course</button>';
+    html += "</div>";
+    html += "</div></div>";
+    return html;
+  }
+
+  function renderWidget(data) {
+    const content = document.getElementById("csodContent");
+    const viewAll = document.getElementById("csodViewAll");
+    if (viewAll && data.catalogUrl) viewAll.setAttribute("href", data.catalogUrl);
+
+    const courses = data.inProgress || [];
+
+    if (courses.length === 0) {
+      content.innerHTML =
+        '<div class="csod-empty">' +
+        '<div class="check">' + checkIconSvg() + "</div>" +
+        "All caught up — no courses in progress." +
+        "</div>";
+      return;
+    }
+
+    let html = '<div class="csod-carousel-shell">';
+    html += '<button class="csod-arrow prev" id="csodPrev" aria-label="Previous course">' + chevronSvg("prev") + "</button>";
+    html += '<div class="csod-viewport"><div class="csod-track" id="csodTrack">';
+    courses.forEach(function (c) { html += '<div class="csod-slide">' + slideMarkup(c) + "</div>"; });
+    html += "</div></div>";
+    html += '<button class="csod-arrow next" id="csodNext" aria-label="Next course">' + chevronSvg("next") + "</button>";
+    html += "</div>";
+
+    if (courses.length > 1) {
+      html += '<div class="csod-dots" id="csodDots">';
+      courses.forEach(function (_, i) {
+        html += '<button class="csod-dot' + (i === 0 ? " active" : "") + '" data-index="' + i + '" aria-label="Go to course ' + (i + 1) + '"></button>';
+      });
+      html += "</div>";
+    }
+
+    if (data.upNext) {
+      html += '<div class="csod-next">';
+      html += '<span class="left">Up next:<span class="course-name">' + data.upNext.title + "</span></span>";
+      html += '<a href="' + data.upNext.courseUrl + '" target="_blank" rel="noopener">Start</a>';
+      html += "</div>";
+    }
+
+    content.innerHTML = html;
+    initCarousel(courses);
+  }
+
+  function initCarousel(courses) {
+    const track = document.getElementById("csodTrack");
+    const prevBtn = document.getElementById("csodPrev");
+    const nextBtn = document.getElementById("csodNext");
+    const dots = document.querySelectorAll(".csod-dot");
+
+    let index = 0;
+    let startX = 0;
+    let currentX = 0;
+    let dragging = false;
+    let widthPx = track.parentElement.getBoundingClientRect().width;
+
+    function clamp(i) { return Math.max(0, Math.min(courses.length - 1, i)); }
+
+    function goTo(i, animate) {
+      index = clamp(i);
+      track.style.transition = animate === false ? "none" : "";
+      track.style.transform = "translateX(-" + (index * widthPx) + "px)";
+      dots.forEach(function (d, di) { d.classList.toggle("active", di === index); });
+      if (prevBtn) prevBtn.disabled = index === 0;
+      if (nextBtn) nextBtn.disabled = index === courses.length - 1;
+    }
+
+    if (prevBtn) prevBtn.addEventListener("click", function () { goTo(index - 1); });
+    if (nextBtn) nextBtn.addEventListener("click", function () { goTo(index + 1); });
+    dots.forEach(function (d) {
+      d.addEventListener("click", function () { goTo(parseInt(d.getAttribute("data-index"), 10)); });
+    });
+
+    // Resume buttons live inside each slide, so they move with the swipe.
+    // Guard against firing a "click" that was actually the tail end of a drag.
+    let dragMoved = false;
+    track.addEventListener("click", function (e) {
+      if (dragMoved) { dragMoved = false; return; }
+      const btn = e.target.closest(".csod-resume-btn");
+      if (btn) window.open(btn.getAttribute("data-course-url"), "_blank", "noopener");
+    });
+
+    window.addEventListener("resize", function () {
+      widthPx = track.parentElement.getBoundingClientRect().width;
+      goTo(index, false);
+    });
+
+    // --- Touch swipe ---
+    track.addEventListener("touchstart", function (e) {
+      startX = e.touches[0].clientX;
+      dragging = true;
+      track.classList.add("dragging");
+    }, { passive: true });
+
+    track.addEventListener("touchmove", function (e) {
+      if (!dragging) return;
+      currentX = e.touches[0].clientX - startX;
+      track.style.transform = "translateX(" + (-(index * widthPx) + currentX) + "px)";
+    }, { passive: true });
+
+    track.addEventListener("touchend", function () {
+      track.classList.remove("dragging");
+      dragging = false;
+      if (Math.abs(currentX) > 6) dragMoved = true;
+      if (Math.abs(currentX) > widthPx * 0.2) {
+        goTo(currentX < 0 ? index + 1 : index - 1);
+      } else {
+        goTo(index);
+      }
+      currentX = 0;
+    });
+
+    // --- Mouse drag (desktop trackpad / mouse users) ---
+    track.addEventListener("mousedown", function (e) {
+      startX = e.clientX;
+      dragging = true;
+      track.classList.add("dragging");
+    });
+
+    window.addEventListener("mousemove", function (e) {
+      if (!dragging) return;
+      currentX = e.clientX - startX;
+      track.style.transform = "translateX(" + (-(index * widthPx) + currentX) + "px)";
+    });
+
+    window.addEventListener("mouseup", function () {
+      if (!dragging) return;
+      track.classList.remove("dragging");
+      dragging = false;
+      if (Math.abs(currentX) > 6) dragMoved = true;
+      if (Math.abs(currentX) > widthPx * 0.2) {
+        goTo(currentX < 0 ? index + 1 : index - 1);
+      } else {
+        goTo(index);
+      }
+      currentX = 0;
+    });
+
+    goTo(0, false);
+  }
+
+  fetchLearningData().then(renderWidget);
+
+})();
+</script>
+
+</body>
+</html>
