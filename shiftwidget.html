@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shift Widget</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f2f2f2;
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .shift-card {
+    width: 100%;
+    max-width: 340px;
+    background: #fbe3e3;
+    border-radius: 16px;
+    padding: 16px 18px 18px;
+  }
+
+  .shift-label {
+    color: #d64545;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  .shift-title {
+    color: #1a1a1a;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 6px;
+  }
+
+  .shift-meta {
+    color: #555;
+    font-size: 13px;
+    margin: 0 0 16px;
+  }
+
+  .shift-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .shift-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease;
+  }
+
+  .shift-btn:hover {
+    background: #f5f5f5;
+  }
+
+  .shift-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+  <div class="shift-card">
+    <p class="shift-label">Today's shift &middot; 9:00&ndash;13:00</p>
+    <p class="shift-title">Redfern Community Centre</p>
+    <p class="shift-meta">Team leader: Karen Lewis &middot; 0412 345 678</p>
+
+    <div class="shift-actions">
+      <a
+        class="shift-btn"
+        href="https://www.google.com/maps/place/Redfern+Community+Centre,+29-53+Hugo+St,+Redfern+NSW+2016/@-33.8903543,151.1985543,17z/data=!4m6!3m5!1s0x6b12b1d75ea5ca1d:0x7ea7c8e5c9eac8a3!8m2!3d-33.8903543!4d151.1985543!16s%2Fg%2F11cmn7nkd4?utm_campaign=ml-le-16204899&g_ep=Eg1tbF8yMDI2MDkyMl8wIJvbDyoASAJQAg%3D%3D"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+        </svg>
+        Directions
+      </a>
+
+      <a class="shift-btn" href="tel:+61412345678">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+        </svg>
+        Call leader
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>
