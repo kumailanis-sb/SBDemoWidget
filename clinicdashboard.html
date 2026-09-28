@@ -406,10 +406,22 @@
 <script>
   (function() {
 
-    // --- Branding hook (pulled from the clinic dashboard widget) ---
-    // Reads --sb-brand off this document, falling back to reading it off
-    // the parent Staffbase page when embedded as an iframe widget.
+    // --- Branding hook ---
+    // Reads a `brand` query param off the widget URL, e.g.
+    // ...clinicdashboard.html?brand=%23A7DBDE  (the %23 is a URL-encoded #)
+    // and applies it as --primary. Falls back to --sb-brand (CSS var set by
+    // a Staffbase host page) if no query param is present, then to the
+    // built-in default.
     function applySBBrand() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var brand = params.get('brand');
+        if (brand) {
+          document.documentElement.style.setProperty('--primary', decodeURIComponent(brand));
+          return;
+        }
+      } catch (e) {}
+
       try {
         var sb = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim();
         if (sb) {
