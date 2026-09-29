@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Clinic Operations — Frankston</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --navy:#0F3D3E;
+    --navy-deep:#0A2E2F;
+    --teal:#1B5D57;
+    --ink:#1C2B2A;
+    --slate:#5C6E6C;
+    --slate-soft:#8B9997;
+    --line:#E4E9E7;
+    --rust:#C1543D;
+    --rust-soft:#F6E4E0;
+    --amber:#B8862E;
+    --amber-soft:#F6EEDD;
+    --good:#3E7A5B;
+    --good-soft:#E3EFE7;
+    --bg-card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; background:transparent;}
+  .cow-frame{
+    width:100%;
+    max-width:742px;
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    color:var(--ink);
+  }
+
+  /* header bar, mirrors the embedded-report chrome */
+  .cow-titlebar{
+    background:var(--navy);
+    color:#EAF3F0;
+    padding:10px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .cow-titlebar-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .cow-titlebar-badge{
+    width:22px;height:22px;
+    border-radius:5px;
+    background:#EAF3F0;
+    color:var(--navy);
+    font-size:11px;
+    font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .cow-titlebar-name{
+    font-size:12.5px;
+    font-weight:600;
+    letter-spacing:0.02em;
+  }
+  .cow-titlebar-sub{
+    font-size:11.5px;
+    color:#B7D6CE;
+  }
+  .cow-live{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:11px;
+    color:#F0B8A8;
+  }
+  .cow-live::before{
+    content:"";
+    width:6px;height:6px;border-radius:50%;
+    background:#E8886F;
+  }
+
+  /* tab row */
+  .cow-tabs{
+    display:flex;
+    border-bottom:1px solid var(--line);
+    background:#FAFAF8;
+    padding:0 12px;
+  }
+  .cow-tab{
+    border:none;
+    background:none;
+    font-size:12.5px;
+    font-family:inherit;
+    color:var(--slate);
+    padding:9px 12px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .cow-tab.active{
+    color:var(--navy);
+    font-weight:600;
+    border-bottom-color:var(--navy);
+  }
+
+  .cow-body{
+    padding:14px 16px 10px;
+    height:400px;
+    overflow:hidden;
+  }
+  .cow-view{display:none;}
+  .cow-view.active{display:block;}
+
+  /* stat row */
+  .cow-stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+    margin-bottom:12px;
+  }
+  .cow-stat{
+    background:#fff;
+    padding:9px 11px;
+  }
+  .cow-stat-num{font-size:19px; font-weight:700; line-height:1.1;}
+  .cow-stat-num.risk{color:var(--rust);}
+  .cow-stat-label{font-size:10.5px; color:var(--slate); margin-top:3px;}
+
+  /* two column grid for overview */
+  .cow-grid{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:14px;
+  }
+  .cow-panel-title{
+    font-size:11px;
+    font-weight:600;
+    color:var(--slate);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    margin:0 0 3px;
+  }
+  .cow-panel-sub{
+    font-size:10px;
+    color:var(--slate-soft);
+    margin:0 0 9px;
+    line-height:1.35;
+  }
+
+  .cow-bar-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:9px;
+  }
+  .cow-bar-label{
+    width:118px;
+    font-size:11.5px;
+    color:var(--ink);
+    flex-shrink:0;
+    line-height:1.25;
+  }
+  .cow-bar-track{
+    flex:1;
+    height:14px;
+    background:#EEF1F0;
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .cow-bar-fill{
+    height:100%;
+    background:var(--teal);
+    border-radius:3px;
+  }
+  .cow-bar-fill.warn{background:var(--amber);}
+  .cow-bar-fill.risk{background:var(--rust);}
+  .cow-bar-pct{
+    width:34px;
+    font-size:11px;
+    color:var(--slate);
+    text-align:right;
+    flex-shrink:0;
+  }
+
+  .cow-roster-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 0;
+    border-bottom:1px solid var(--line);
+    font-size:11.5px;
+  }
+  .cow-roster-row:last-child{border-bottom:none;}
+  .cow-avatar{
+    width:22px;height:22px;
+    border-radius:50%;
+    background:var(--navy);
+    color:#fff;
+    font-size:9.5px;
+    font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .cow-roster-name{flex:1; font-weight:500;}
+  .cow-roster-status{
+    font-size:10.5px;
+    padding:2px 7px;
+    border-radius:9px;
+    white-space:nowrap;
+  }
+  .cow-roster-status.on{background:var(--good-soft); color:var(--good);}
+  .cow-roster-status.late{background:var(--amber-soft); color:var(--amber);}
+  .cow-roster-status.leave{background:#EEF1F0; color:var(--slate);}
+
+  .cow-ot-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:5px 0;
+  }
+  .cow-ot-mid{flex:1; min-width:0;}
+  .cow-ot-name{
+    font-size:11.5px;
+    font-weight:500;
+    margin-bottom:3px;
+  }
+  .cow-ot-track{
+    height:5px;
+    background:#EEF1F0;
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .cow-ot-fill{
+    height:100%;
+    background:var(--teal);
+    border-radius:3px;
+  }
+  .cow-ot-fill.watch{background:var(--amber);}
+  .cow-ot-fill.flag{background:var(--rust);}
+  .cow-ot-hrs{
+    width:42px;
+    text-align:right;
+    font-size:11px;
+    font-weight:600;
+    color:var(--ink);
+    flex-shrink:0;
+  }
+  .cow-ot-pill{
+    width:66px;
+    text-align:center;
+    font-size:9.5px;
+    font-weight:600;
+    padding:3px 0;
+    border-radius:9px;
+    flex-shrink:0;
+  }
+  .cow-ot-pill.flag{background:var(--rust-soft); color:var(--rust);}
+  .cow-ot-pill.watch{background:var(--amber-soft); color:var(--amber);}
+  .cow-ot-pill.ok{background:var(--good-soft); color:var(--good);}
+
+  /* compliance table view */
+  .cow-table{width:100%; border-collapse:collapse; font-size:11.5px;}
+  .cow-table th{
+    text-align:left;
+    font-size:10.5px;
+    color:var(--slate);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    padding:0 8px 8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .cow-table td{
+    padding:8px 8px 8px 0;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  .cow-pill{
+    font-size:10.5px;
+    padding:3px 8px;
+    border-radius:9px;
+    white-space:nowrap;
+  }
+  .cow-pill.overdue{background:var(--rust-soft); color:var(--rust);}
+  .cow-pill.soon{background:var(--amber-soft); color:var(--amber);}
+  .cow-pill.ok{background:var(--good-soft); color:var(--good);}
+
+  /* roster tab full list */
+  .cow-roster-full{display:grid; grid-template-columns:1fr 1fr; gap:0 22px;}
+
+  /* footer */
+  .cow-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:9px 16px;
+    border-top:1px solid var(--line);
+    font-size:11.5px;
+    color:var(--slate);
+  }
+  .cow-footer a{color:var(--navy); text-decoration:none; font-weight:600;}
+  .cow-footer-icons{display:flex; gap:12px; color:var(--slate-soft);}
+</style>
+</head>
+<body>
+
+<div class="cow-frame">
+  <div class="cow-titlebar">
+    <div class="cow-titlebar-left">
+      <div class="cow-titlebar-badge">BH</div>
+      <div>
+        <div class="cow-titlebar-name">CLINIC OPERATIONS</div>
+        <div class="cow-titlebar-sub">Frankston · Peninsula Care Group</div>
+      </div>
+    </div>
+    <div class="cow-live">Live in 20 min — town hall</div>
+  </div>
+
+  <div class="cow-tabs">
+    <button class="cow-tab active" onclick="cowSwitch('overview', this)">Overview</button>
+    <button class="cow-tab" onclick="cowSwitch('compliance', this)">Compliance</button>
+    <button class="cow-tab" onclick="cowSwitch('roster', this)">Roster</button>
+  </div>
+
+  <div class="cow-body">
+
+    <!-- OVERVIEW -->
+    <div class="cow-view active" id="cow-overview">
+      <div class="cow-stats">
+        <div class="cow-stat">
+          <div class="cow-stat-num">18<span style="font-size:12px;color:var(--slate)">/22</span></div>
+          <div class="cow-stat-label">Sign-offs done</div>
+        </div>
+        <div class="cow-stat">
+          <div class="cow-stat-num">92%</div>
+          <div class="cow-stat-label">Coverage today</div>
+        </div>
+        <div class="cow-stat">
+          <div class="cow-stat-num risk">2</div>
+          <div class="cow-stat-label">Overdue items</div>
+        </div>
+        <div class="cow-stat">
+          <div class="cow-stat-num">3</div>
+          <div class="cow-stat-label">On leave</div>
+        </div>
+      </div>
+
+      <div class="cow-grid">
+        <div>
+          <p class="cow-panel-title">Sign-off status by item</p>
+          <div class="cow-bar-row">
+            <div class="cow-bar-label">Infection control protocol</div>
+            <div class="cow-bar-track"><div class="cow-bar-fill risk" style="width:41%"></div></div>
+            <div class="cow-bar-pct">41%</div>
+          </div>
+          <div class="cow-bar-row">
+            <div class="cow-bar-label">Fire evacuation drill</div>
+            <div class="cow-bar-track"><div class="cow-bar-fill warn" style="width:68%"></div></div>
+            <div class="cow-bar-pct">68%</div>
+          </div>
+          <div class="cow-bar-row">
+            <div class="cow-bar-label">Medication safety &amp; high-risk medicines policy</div>
+            <div class="cow-bar-track"><div class="cow-bar-fill warn" style="width:76%"></div></div>
+            <div class="cow-bar-pct">76%</div>
+          </div>
+          <div class="cow-bar-row">
+            <div class="cow-bar-label">Handover documentation</div>
+            <div class="cow-bar-track"><div class="cow-bar-fill warn" style="width:59%"></div></div>
+            <div class="cow-bar-pct">59%</div>
+          </div>
+        </div>
+        <div>
+          <p class="cow-panel-title">Overtime this week</p>
+          <p class="cow-panel-sub">Fair Work Act 2009 (Cth) — National Employment Standards, reasonable additional hours</p>
+          <div class="cow-ot-row">
+            <div class="cow-avatar">MO</div>
+            <div class="cow-ot-mid">
+              <div class="cow-ot-name">Marcus Okafor</div>
+              <div class="cow-ot-track"><div class="cow-ot-fill flag" style="width:97%"></div></div>
+            </div>
+            <div class="cow-ot-hrs">14.5h</div>
+            <span class="cow-ot-pill flag">Flagged</span>
+          </div>
+          <div class="cow-ot-row">
+            <div class="cow-avatar">CB</div>
+            <div class="cow-ot-mid">
+              <div class="cow-ot-name">Chloe Baird</div>
+              <div class="cow-ot-track"><div class="cow-ot-fill flag" style="width:73%"></div></div>
+            </div>
+            <div class="cow-ot-hrs">11.0h</div>
+            <span class="cow-ot-pill flag">Flagged</span>
+          </div>
+          <div class="cow-ot-row">
+            <div class="cow-avatar">SP</div>
+            <div class="cow-ot-mid">
+              <div class="cow-ot-name">Sana Patel</div>
+              <div class="cow-ot-track"><div class="cow-ot-fill watch" style="width:60%"></div></div>
+            </div>
+            <div class="cow-ot-hrs">9.0h</div>
+            <span class="cow-ot-pill watch">Monitor</span>
+          </div>
+          <div class="cow-ot-row">
+            <div class="cow-avatar">JT</div>
+            <div class="cow-ot-mid">
+              <div class="cow-ot-name">Jenna Tran</div>
+              <div class="cow-ot-track"><div class="cow-ot-fill" style="width:40%"></div></div>
+            </div>
+            <div class="cow-ot-hrs">6.0h</div>
+            <span class="cow-ot-pill ok">Within limit</span>
+          </div>
+          <div class="cow-ot-row">
+            <div class="cow-avatar">DL</div>
+            <div class="cow-ot-mid">
+              <div class="cow-ot-name">Dev Lal</div>
+              <div class="cow-ot-track"><div class="cow-ot-fill" style="width:30%"></div></div>
+            </div>
+            <div class="cow-ot-hrs">4.5h</div>
+            <span class="cow-ot-pill ok">Within limit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPLIANCE -->
+    <div class="cow-view" id="cow-compliance">
+      <p class="cow-panel-title">Team sign-offs</p>
+      <table class="cow-table">
+        <tr><th>Item</th><th>Acknowledged</th><th>Status</th></tr>
+        <tr>
+          <td>Winter infection control protocol</td>
+          <td>9 of 22</td>
+          <td><span class="cow-pill overdue">2 days overdue</span></td>
+        </tr>
+        <tr>
+          <td>Fire &amp; emergency evacuation drill</td>
+          <td>15 of 22</td>
+          <td><span class="cow-pill soon">Due in 1 day</span></td>
+        </tr>
+        <tr>
+          <td>Medication safety &amp; high-risk medicines policy</td>
+          <td>17 of 22</td>
+          <td><span class="cow-pill soon">Due in 3 days</span></td>
+        </tr>
+        <tr>
+          <td>Patient handover documentation standard</td>
+          <td>13 of 22</td>
+          <td><span class="cow-pill soon">Due in 4 days</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ROSTER -->
+    <div class="cow-view" id="cow-roster">
+      <p class="cow-panel-title">Team of 22 — today</p>
+      <div class="cow-roster-full">
+        <div>
+          <div class="cow-roster-row"><div class="cow-avatar">JT</div><div class="cow-roster-name">Jenna Tran · Clinic Nurse</div><span class="cow-roster-status on">On shift</span></div>
+          <div class="cow-roster-row"><div class="cow-avatar">MO</div><div class="cow-roster-name">Marcus Okafor · Clinic Nurse</div><span class="cow-roster-status on">On shift</span></div>
+          <div class="cow-roster-row"><div class="cow-avatar">SP</div><div class="cow-roster-name">Sana Patel · Allied Health</div><span class="cow-roster-status late">Late</span></div>
+          <div class="cow-roster-row"><div class="cow-avatar">HK</div><div class="cow-roster-name">Hana Kim · Admin Coord.</div><span class="cow-roster-status on">On shift</span></div>
+          <div class="cow-roster-row"><div class="cow-avatar">DL</div><div class="cow-roster-name">Dev Lal · Clinic Nurse</div><span class="cow-roster-status on">On shift</span></div>
+        </div>
+        <div>
+          <div class="cow-roster-row"><div class="cow-avatar">RW</div><div class="cow-roster-name">Ryan Webb · Clinic Nurse</div><span class="cow-roster-status leave">On leave</span></div>
+          <div class="cow-roster-row"><div class="cow-avatar">AF</div><div class="cow-roster-name">Amal Farid · Clinic Nurse</div><span class="cow-roster-status on">On shift</span></div>
+          <div class="cow-roster-row"><div class="cow-avatar">CB</div><div class="cow-roster-name">Chloe Baird · Allied Health</div><span class="cow-roster-status on">On shift</span></div>
+          <div class="cow-roster-row"><div class="cow-avatar">TN</div><div class="cow-roster-name">Tom Nguyen · Admin Coord.</div><span class="cow-roster-status leave">On leave</span></div>
+          <div class="cow-roster-row"><div class="cow-avatar">EW</div><div class="cow-roster-name">Ella Watts · Clinic Nurse</div><span class="cow-roster-status on">On shift</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="cow-footer">
+    <span><a href="#">Bayside Health Intranet</a> · Clinic Manager view</span>
+    <div class="cow-footer-icons">
+      <span title="Share">&#8599;</span>
+      <span title="Expand">&#9974;</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  function cowSwitch(id, btn){
+    document.querySelectorAll('.cow-view').forEach(function(v){ v.classList.remove('active'); });
+    document.querySelectorAll('.cow-tab').forEach(function(t){ t.classList.remove('active'); });
+    document.getElementById('cow-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
