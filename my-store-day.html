@@ -1,1 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Staffbase brand color via ?brand= URL param (sb-brand-url-param) -->
+<script>(function(){try{var b=new URLSearchParams(location.search).get('brand');if(b&&/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(b)){document.documentElement.style.setProperty('--sb-brand',b);}}catch(e){}})();</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="widget-name" content="My Store Day">
+<meta name="widget-description" content="Frontline store associate's shift, today's sales target and open tasks on a single screen">
+<meta name="widget-tags" content="Operations, Scheduling">
+<title>My Store Day</title>
 
+<style>
+    :root {
+        --primary: var(--sb-brand, #2563eb);
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --text: #1f2937;
+        --text-light: #6b7280;
+        --bg: #ffffff;
+        --bg-gray: #f9fafb;
+        --border: #e5e7eb;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --primary: var(--sb-brand, #3b9eff);
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text: #f3f4f6;
+            --text-light: #9ca3af;
+            --bg: #1f2937;
+            --bg-gray: #111827;
+            --border: #374151;
+        }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 16px;
+        -webkit-font-smoothing: antialiased;
+    }
+    /* Prefer Simplified Chinese glyph variants (avoids Japanese/Traditional forms of shared Han characters) */
+    :lang(zh-CN) body {
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Segoe UI", Roboto, sans-serif;
+    }
+
+    .widget { width: 100%; max-width: 480px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .cw-head {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; margin-bottom: 12px;
+    }
+    .cw-head-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+    .cw-chip {
+        font-size: 12px; font-weight: 600; color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 12%, transparent);
+        padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ── Shift card ── */
+    .shift-card {
+        background: var(--bg-gray); border-radius: 12px; padding: 12px 14px;
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; margin-bottom: 12px;
+    }
+    .shift-info { min-width: 0; }
+    .shift-label { font-size: 12px; color: var(--text-light); margin-bottom: 3px; }
+    .shift-time { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+    .cw-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+    .cw-btn {
+        border: none; font-family: inherit; cursor: pointer; font-weight: 600;
+        font-size: 13px; padding: 9px 14px; border-radius: 9px;
+        background: var(--primary); color: #fff; white-space: nowrap; flex-shrink: 0;
+    }
+    .cw-btn:hover { filter: brightness(0.93); }
+
+    /* ── Stat strip ── */
+    .stat-strip { display: flex; gap: 10px; margin-bottom: 14px; }
+    .stat {
+        flex: 1; background: var(--bg-gray); border-radius: 12px; padding: 11px 13px;
+    }
+    .stat-label { font-size: 11px; color: var(--text-light); margin-bottom: 4px; }
+    .stat-value { font-size: 19px; font-weight: 700; line-height: 1; }
+    .stat-sub { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+    .cw-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+    .cw-bar-fill { height: 100%; border-radius: 3px; background: var(--primary); }
+
+    /* ── Tasks ── */
+    .cw-section-heading {
+        font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+        color: var(--text-light); text-transform: uppercase;
+        display: flex; justify-content: space-between; margin-bottom: 6px;
+    }
+    .task { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+    .task:last-child { border-bottom: none; }
+    .task-check {
+        width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border);
+        flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 12px; color: #fff; transition: all .15s;
+    }
+    .task-check.done { background: var(--primary); border-color: var(--primary); }
+    .task-name { font-size: 14px; flex: 1; min-width: 0; }
+    .task.done .task-name { color: var(--text-light); text-decoration: line-through; }
+    .task-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .badge-now { background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--warning); }
+    .badge-soon { background: color-mix(in srgb, var(--text-light) 15%, transparent); color: var(--text-light); }
+</style>
+</head>
+
+<body>
+
+<div class="widget">
+    <div class="cw-head">
+        <span class="cw-head-title" id="headDate"></span>
+        <span class="cw-chip" id="storeChip"></span>
+    </div>
+
+    <div class="shift-card">
+        <div class="shift-info">
+            <div class="shift-label" id="shiftLabel"></div>
+            <div class="shift-time"><span class="cw-dot"></span><span id="shiftTime"></span></div>
+        </div>
+        <button class="cw-btn" id="clockBtn"></button>
+    </div>
+
+    <div class="stat-strip">
+        <div class="stat">
+            <div class="stat-label" id="salesLabel"></div>
+            <div class="stat-value" id="salesValue"></div>
+            <div class="cw-bar"><div class="cw-bar-fill" id="salesBar"></div></div>
+            <div class="stat-sub" id="salesSub"></div>
+        </div>
+        <div class="stat">
+            <div class="stat-label" id="upsellLabel"></div>
+            <div class="stat-value" id="upsellValue"></div>
+            <div class="stat-sub" id="upsellSub"></div>
+        </div>
+    </div>
+
+    <div class="cw-section-heading"><span id="tasksHeading"></span><span id="tasksCount"></span></div>
+    <div id="taskList"></div>
+</div>
+
+<script>
+    const LANG = (() => {
+        const l = navigator.language || '';
+        if (l.startsWith('de')) return 'de';
+        if (l.startsWith('fr')) return 'fr';
+        if (l.startsWith('es')) return 'es';
+        if (l.startsWith('ja')) return 'ja';
+        if (l.startsWith('zh')) return 'zh-CN';
+        if (l === 'en-GB')      return 'en-GB';
+        return 'en-US';
+    })();
+    document.documentElement.lang = LANG;
+
+    const LOCALE = { 'de':'de-DE','fr':'fr-FR','es':'es-ES','ja':'ja-JP','zh-CN':'zh-CN','en-GB':'en-GB','en-US':'en-US' }[LANG];
+    const CURRENCY = { 'de':'EUR','fr':'EUR','es':'EUR','ja':'JPY','zh-CN':'CNY','en-GB':'GBP','en-US':'USD' }[LANG];
+    const LANG_SUFFIX = { 'de':'De','fr':'Fr','es':'Es','ja':'Ja','zh-CN':'Zh','en-GB':'','en-US':'' }[LANG];
+    const loc = (o, base) => o[base + LANG_SUFFIX] ?? o[base];
+
+    const T = {
+        de: { onShift:'Im Dienst', shift:'Schicht',
+              clockOut:'Ausstempeln', clockIn:'Einstempeln', sales:'Umsatz heute', target:'Ziel',
+              upsell:'Zusatzverkauf', vsAvg:'ggü. Ø Team', tasks:'MEINE AUFGABEN', done:'erledigt', now:'Jetzt', soon:'Später' },
+        fr: { onShift:'En service', shift:'Service',
+              clockOut:'Pointer sortie', clockIn:'Pointer entrée', sales:'Ventes du jour', target:'Objectif',
+              upsell:'Vente add.', vsAvg:'vs moy. équipe', tasks:'MES TÂCHES', done:'faites', now:'Maintenant', soon:'Plus tard' },
+        es: { onShift:'En turno', shift:'Turno',
+              clockOut:'Fichar salida', clockIn:'Fichar entrada', sales:'Ventas de hoy', target:'Objetivo',
+              upsell:'Venta adic.', vsAvg:'vs media equipo', tasks:'MIS TAREAS', done:'hechas', now:'Ahora', soon:'Después' },
+        ja: { onShift:'勤務中', shift:'シフト',
+              clockOut:'退勤', clockIn:'出勤', sales:'本日の売上', target:'目標',
+              upsell:'追加販売', vsAvg:'チーム平均比', tasks:'今日のタスク', done:'完了', now:'今すぐ', soon:'後で' },
+        'zh-CN': { onShift:'当班中', shift:'班次',
+              clockOut:'下班打卡', clockIn:'上班打卡', sales:'今日销售额', target:'目标达成',
+              upsell:'连带销售率', vsAvg:'较团队平均', tasks:'我的任务', done:'已完成', now:'现在', soon:'稍后' },
+        'en-GB': { onShift:'On shift', shift:'Shift',
+              clockOut:'Clock out', clockIn:'Clock in', sales:"Today's sales", target:'target',
+              upsell:'Upsell rate', vsAvg:'vs team avg', tasks:'MY TASKS', done:'done', now:'Now', soon:'Later' },
+        'en-US': { onShift:'On shift', shift:'Shift',
+              clockOut:'Clock out', clockIn:'Clock in', sales:"Today's sales", target:'target',
+              upsell:'Upsell rate', vsAvg:'vs team avg', tasks:'MY TASKS', done:'done', now:'Now', soon:'Later' },
+    };
+    const t = T[LANG] || T['en-US'];
+
+    const STORE = '#1042';
+    const SALES_NOW = 3240, SALES_TARGET = 4000;
+    const UPSELL = 18, UPSELL_DELTA = 4;
+
+    // Sector-specific task lists (?sector=food|grocery|general). Keeps the widget
+    // reusable across retail sub-industries — e.g. "aisle 4" fits groceries, but a
+    // restaurant needs prep/line tasks instead.
+    const SECTOR = (new URLSearchParams(location.search).get('sector') || 'general').toLowerCase();
+    const TASKS_BY_SECTOR = {
+        general: [
+            { nameDe:'Regale auffüllen', nameFr:'Réappro. rayons', nameEs:'Reponer estantes', nameJa:'棚を補充', nameZh:'货架补货', name:'Restock shelves', when:'now',  done:false },
+            { nameDe:'Preisaudit Aktion', nameFr:'Audit prix promo', nameEs:'Auditoría de precios', nameJa:'価格監査', nameZh:'促销价格核查', name:'Price audit — promo', when:'now',  done:false },
+            { nameDe:'Verkaufsfläche aufräumen', nameFr:'Ranger la surface', nameEs:'Ordenar la tienda', nameJa:'売場整理', nameZh:'整理卖场', name:'Tidy the floor', when:'soon', done:false },
+            { nameDe:'Kassenwechsel 14:00', nameFr:'Relève caisse 14:00', nameEs:'Cambio de caja 14:00', nameJa:'レジ交代 14:00', nameZh:'14:00 收银交接', name:'Till handover 14:00', when:'soon', done:true },
+            { nameDe:'Retouren bearbeiten', nameFr:'Traiter les retours', nameEs:'Procesar devoluciones', nameJa:'返品処理', nameZh:'处理退货', name:'Process returns', when:'soon', done:true },
+        ],
+        grocery: [
+            { nameDe:'Gang 4 auffüllen', nameFr:'Réappro. allée 4', nameEs:'Reponer pasillo 4', nameJa:'通路4を補充', nameZh:'4号通道补货', name:'Restock aisle 4', when:'now',  done:false },
+            { nameDe:'Obst & Gemüse drehen', nameFr:'Rotation fruits & légumes', nameEs:'Rotación de frescos', nameJa:'青果ローテーション', nameZh:'果蔬陈列轮换', name:'Produce rotation', when:'now',  done:false },
+            { nameDe:'Preisaudit Aktion', nameFr:'Audit prix promo', nameEs:'Auditoría de precios', nameJa:'価格監査', nameZh:'促销价格核查', name:'Price audit — promo', when:'soon', done:false },
+            { nameDe:'Einkaufswagen einsammeln', nameFr:'Collecte des chariots', nameEs:'Recoger carros', nameJa:'カート回収', nameZh:'回收购物车', name:'Cart collection', when:'soon', done:true },
+            { nameDe:'Kassenwechsel 14:00', nameFr:'Relève caisse 14:00', nameEs:'Cambio de caja 14:00', nameJa:'レジ交代 14:00', nameZh:'14:00 收银交接', name:'Till handover 14:00', when:'soon', done:true },
+        ],
+        food: [
+            { nameDe:'Line vorbereiten', nameFr:'Mise en place', nameEs:'Preparar la línea', nameJa:'仕込み', nameZh:'备餐线准备', name:'Prep line setup', when:'now',  done:false },
+            { nameDe:'Topping-Station auffüllen', nameFr:'Réappro. garnitures', nameEs:'Reponer aderezos', nameJa:'トッピング補充', nameZh:'补充配料台', name:'Restock toppings bar', when:'now',  done:false },
+            { nameDe:'Gastraum reinigen', nameFr:'Nettoyer la salle', nameEs:'Limpiar comedor', nameJa:'客席清掃', nameZh:'清洁大厅及用餐区', name:'Lobby & dining clean', when:'soon', done:false },
+            { nameDe:'Kasse zählen', nameFr:'Comptage caisse', nameEs:'Conteo de caja', nameJa:'レジ点検', nameZh:'清点钱箱', name:'Cash drawer count', when:'soon', done:true },
+            { nameDe:'Online-Bestellungen prüfen', nameFr:'Vérifier commandes en ligne', nameEs:'Revisar pedidos online', nameJa:'オンライン注文確認', nameZh:'检查线上订单', name:'Digital orders check', when:'soon', done:true },
+        ],
+    };
+    const TASKS = TASKS_BY_SECTOR[SECTOR] || TASKS_BY_SECTOR.general;
+
+    function money(n) { return new Intl.NumberFormat(LOCALE, { style:'currency', currency:CURRENCY, maximumFractionDigits:0 }).format(n); }
+
+    function applySBBrand() {
+        var sb = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim();
+        if (sb) { document.documentElement.style.setProperty('--primary', sb); return; }
+        try {
+            sb = window.parent.getComputedStyle(window.parent.document.documentElement).getPropertyValue('--sb-brand').trim();
+            if (sb) document.documentElement.style.setProperty('--primary', sb);
+        } catch (e) {}
+    }
+
+    function render() {
+        document.getElementById('headDate').textContent =
+            new Intl.DateTimeFormat(LOCALE, { weekday:'long', day:'numeric', month:'short' }).format(new Date());
+        document.getElementById('storeChip').textContent = t.shift + ' ' + STORE;
+
+        document.getElementById('shiftLabel').textContent = t.onShift;
+        document.getElementById('shiftTime').textContent = '09:00 – 17:00';
+        document.getElementById('clockBtn').textContent = t.clockOut;
+
+        var pct = Math.round(SALES_NOW / SALES_TARGET * 100);
+        document.getElementById('salesLabel').textContent = t.sales;
+        document.getElementById('salesValue').textContent = money(SALES_NOW);
+        document.getElementById('salesBar').style.width = pct + '%';
+        document.getElementById('salesSub').textContent = pct + '% ' + t.target + ' · ' + money(SALES_TARGET);
+
+        document.getElementById('upsellLabel').textContent = t.upsell;
+        document.getElementById('upsellValue').textContent = UPSELL + '%';
+        document.getElementById('upsellSub').textContent = '+' + UPSELL_DELTA + ' ' + t.vsAvg;
+
+        var doneCount = TASKS.filter(function(x){ return x.done; }).length;
+        document.getElementById('tasksHeading').textContent = t.tasks;
+        document.getElementById('tasksCount').textContent = doneCount + '/' + TASKS.length + ' ' + t.done;
+
+        document.getElementById('taskList').innerHTML = TASKS.map(function(x, i) {
+            var badge = x.when === 'now'
+                ? '<span class="task-badge badge-now">' + t.now + '</span>'
+                : '<span class="task-badge badge-soon">' + t.soon + '</span>';
+            return '<div class="task ' + (x.done?'done':'') + '" onclick="toggle(' + i + ')">' +
+                '<div class="task-check ' + (x.done?'done':'') + '">' + (x.done?'✓':'') + '</div>' +
+                '<span class="task-name">' + loc(x, 'name') + '</span>' +
+                (x.done ? '' : badge) +
+                '</div>';
+        }).join('');
+    }
+
+    function toggle(i) { TASKS[i].done = !TASKS[i].done; render(); }
+
+    document.addEventListener('DOMContentLoaded', function() { applySBBrand(); render(); });
+</script>
+
+<!-- Widget usage counter — see CLAUDE.md -->
+<script>(function(){try{if(location.search.indexOf('preview=1')!==-1)return;var n=location.pathname.split('/').pop();if(!n||n==='index.html')return;var url='https://widget-counter.klauejohann.workers.dev/bump/'+encodeURIComponent(n);if(navigator.sendBeacon)navigator.sendBeacon(url);else fetch(url,{method:'POST',keepalive:true}).catch(function(){});var k='widgetCounts',c=JSON.parse(localStorage.getItem(k)||'{}');c[n]=(c[n]||0)+1;localStorage.setItem(k,JSON.stringify(c));}catch(e){}})();</script>
+
+</body>
+</html>
