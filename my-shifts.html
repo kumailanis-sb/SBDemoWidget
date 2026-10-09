@@ -1,1 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Staffbase brand color via ?brand= URL param (sb-brand-url-param) -->
+<script>(function(){try{var b=new URLSearchParams(location.search).get('brand');if(b&&/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(b)){document.documentElement.style.setProperty('--sb-brand',b);}}catch(e){}})();</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="widget-name" content="My Shifts &amp; Swaps">
+<meta name="widget-description" content="Compact single-screen view of this week's shifts with one-tap swap requests and open shifts to claim">
+<meta name="widget-tags" content="Scheduling, HR Data">
+<title>My Shifts &amp; Swaps</title>
 
+<style>
+    :root {
+        --primary: var(--sb-brand, #2563eb);
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --text: #1f2937;
+        --text-light: #6b7280;
+        --bg: #ffffff;
+        --bg-gray: #f9fafb;
+        --border: #e5e7eb;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --primary: var(--sb-brand, #3b9eff);
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text: #f3f4f6;
+            --text-light: #9ca3af;
+            --bg: #1f2937;
+            --bg-gray: #111827;
+            --border: #374151;
+        }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg); color: var(--text); margin: 0; padding: 16px;
+        -webkit-font-smoothing: antialiased;
+    }
+    /* Prefer Simplified Chinese glyph variants (avoids Japanese/Traditional forms of shared Han characters) */
+    :lang(zh-CN) body {
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Segoe UI", Roboto, sans-serif;
+    }
+    .widget { width: 100%; max-width: 480px; margin: 0 auto; }
+
+    .cw-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .cw-head-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+    .cw-chip {
+        font-size: 12px; font-weight: 600; color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 12%, transparent);
+        padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+    }
+
+    .cw-section-heading {
+        font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-light);
+        text-transform: uppercase; display: flex; justify-content: space-between; margin: 4px 0 6px;
+    }
+
+    .shift {
+        display: flex; align-items: center; gap: 12px; padding: 9px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .shift:last-child { border-bottom: none; }
+    .shift-when { flex-shrink: 0; width: 52px; }
+    .shift-day { font-size: 13px; font-weight: 700; }
+    .shift-date { font-size: 11px; color: var(--text-light); }
+    .shift-mid { flex: 1; min-width: 0; }
+    .shift-time { font-size: 14px; font-weight: 600; }
+    .shift-role { font-size: 12px; color: var(--text-light); }
+
+    .cw-btn {
+        border: none; font-family: inherit; cursor: pointer; font-weight: 600; font-size: 12px;
+        padding: 6px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; transition: all .15s;
+    }
+    .cw-btn-solid { background: var(--primary); color: #fff; }
+    .cw-btn-solid:hover { filter: brightness(0.93); }
+    .cw-btn-ghost { background: transparent; color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent); }
+    .cw-btn-ghost:hover { background: color-mix(in srgb, var(--primary) 10%, transparent); }
+    .cw-btn.done { background: color-mix(in srgb, var(--success) 15%, transparent) !important; color: var(--success) !important; border: none !important; cursor: default; pointer-events: none; }
+
+    .open-badge {
+        font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+        background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--warning); margin-left: 8px;
+    }
+    .open-block { background: var(--bg-gray); border-radius: 12px; padding: 4px 14px; margin-top: 6px; }
+</style>
+</head>
+
+<body>
+
+<div class="widget">
+    <div class="cw-head">
+        <span class="cw-head-title" id="headDate"></span>
+        <span class="cw-chip" id="weekChip"></span>
+    </div>
+
+    <div class="cw-section-heading"><span id="myShiftsHeading"></span><span id="myShiftsCount"></span></div>
+    <div id="myShiftList"></div>
+
+    <div class="cw-section-heading" style="margin-top:14px"><span id="openHeading"></span></div>
+    <div class="open-block" id="openList"></div>
+</div>
+
+<script>
+    const LANG = (() => {
+        const l = navigator.language || '';
+        if (l.startsWith('de')) return 'de';
+        if (l.startsWith('fr')) return 'fr';
+        if (l.startsWith('es')) return 'es';
+        if (l.startsWith('ja')) return 'ja';
+        if (l.startsWith('zh')) return 'zh-CN';
+        if (l === 'en-GB')      return 'en-GB';
+        return 'en-US';
+    })();
+    document.documentElement.lang = LANG;
+    const LOCALE = { 'de':'de-DE','fr':'fr-FR','es':'es-ES','ja':'ja-JP','zh-CN':'zh-CN','en-GB':'en-GB','en-US':'en-US' }[LANG];
+    const LANG_SUFFIX = { 'de':'De','fr':'Fr','es':'Es','ja':'Ja','zh-CN':'Zh','en-GB':'','en-US':'' }[LANG];
+    const loc = (o, base) => o[base + LANG_SUFFIX] ?? o[base];
+
+    const T = {
+        de: { week:'Diese Woche', myShifts:'MEINE SCHICHTEN',
+              shifts:'Schichten', open:'OFFENE SCHICHTEN', swap:'Tauschen', claim:'Übernehmen', requested:'Angefragt', claimed:'Übernommen' },
+        fr: { week:'Cette semaine', myShifts:'MES SERVICES',
+              shifts:'services', open:'SERVICES OUVERTS', swap:'Échanger', claim:'Prendre', requested:'Demandé', claimed:'Pris' },
+        es: { week:'Esta semana', myShifts:'MIS TURNOS',
+              shifts:'turnos', open:'TURNOS ABIERTOS', swap:'Cambiar', claim:'Tomar', requested:'Solicitado', claimed:'Tomado' },
+        ja: { week:'今週', myShifts:'私のシフト',
+              shifts:'シフト', open:'空きシフト', swap:'交代', claim:'取得', requested:'申請済み', claimed:'取得済み' },
+        'zh-CN': { week:'本周', myShifts:'我的班次',
+              shifts:'个班次', open:'空缺班次', swap:'换班', claim:'认领', requested:'已申请', claimed:'已认领' },
+        'en-GB': { week:'This week', myShifts:'MY SHIFTS',
+              shifts:'shifts', open:'OPEN SHIFTS', swap:'Swap', claim:'Claim', requested:'Requested', claimed:'Claimed' },
+        'en-US': { week:'This week', myShifts:'MY SHIFTS',
+              shifts:'shifts', open:'OPEN SHIFTS', swap:'Swap', claim:'Claim', requested:'Requested', claimed:'Claimed' },
+    };
+    const t = T[LANG] || T['en-US'];
+
+    const now = new Date();
+    const daysFromNow = n => { const d = new Date(now); d.setDate(d.getDate() + n); return d; };
+    const fmtDay = d => new Intl.DateTimeFormat(LOCALE, { weekday:'short' }).format(d);
+    const fmtDate = d => new Intl.DateTimeFormat(LOCALE, { day:'numeric', month:'short' }).format(d);
+
+    // Generic, cross-industry roles/times so it fits any use case.
+    const MY_SHIFTS = [
+        { in:1, time:'09:00 – 17:00', roleDe:'Frühschicht', roleFr:'Service du matin', roleEs:'Turno de mañana', roleJa:'早番', roleZh:'早班', role:'Morning shift' },
+        { in:3, time:'11:00 – 19:00', roleDe:'Spätschicht',  roleFr:'Service du soir',  roleEs:'Turno de tarde',  roleJa:'遅番', roleZh:'晚班', role:'Late shift' },
+        { in:5, time:'08:00 – 14:00', roleDe:'Wochenende',    roleFr:'Week-end',         roleEs:'Fin de semana',   roleJa:'週末',  roleZh:'周末班', role:'Weekend' },
+    ];
+    const OPEN_SHIFTS = [
+        { in:2, time:'12:00 – 20:00', roleDe:'Aushilfe',   roleFr:'Renfort',      roleEs:'Apoyo',      roleJa:'応援', roleZh:'需要顶班', role:'Cover needed' },
+        { in:4, time:'06:00 – 12:00', roleDe:'Frühdienst', roleFr:'Ouverture',    roleEs:'Apertura',   roleJa:'開店', roleZh:'开店班', role:'Opening' },
+    ];
+
+    function applySBBrand() {
+        var sb = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim();
+        if (sb) { document.documentElement.style.setProperty('--primary', sb); return; }
+        try {
+            sb = window.parent.getComputedStyle(window.parent.document.documentElement).getPropertyValue('--sb-brand').trim();
+            if (sb) document.documentElement.style.setProperty('--primary', sb);
+        } catch (e) {}
+    }
+    const fmtHeaderDate = d => new Intl.DateTimeFormat(LOCALE, { weekday:'long', day:'numeric', month:'short' }).format(d);
+
+    function shiftRow(s, i, kind) {
+        const d = daysFromNow(s.in);
+        const btn = kind === 'mine'
+            ? `<button class="cw-btn cw-btn-ghost" onclick="act(this,'${t.requested}')">${t.swap}</button>`
+            : `<button class="cw-btn cw-btn-solid" onclick="act(this,'${t.claimed}')">${t.claim}</button>`;
+        return `<div class="shift">
+            <div class="shift-when"><div class="shift-day">${fmtDay(d)}</div><div class="shift-date">${fmtDate(d)}</div></div>
+            <div class="shift-mid"><div class="shift-time">${s.time}</div><div class="shift-role">${loc(s,'role')}</div></div>
+            ${btn}
+        </div>`;
+    }
+
+    function act(el, label) { el.textContent = label; el.classList.add('done'); }
+
+    function render() {
+        document.getElementById('headDate').textContent = fmtHeaderDate(now);
+        document.getElementById('weekChip').textContent = t.week;
+        document.getElementById('myShiftsHeading').textContent = t.myShifts;
+        document.getElementById('myShiftsCount').textContent = MY_SHIFTS.length + ' ' + t.shifts;
+        document.getElementById('myShiftList').innerHTML = MY_SHIFTS.map((s,i)=>shiftRow(s,i,'mine')).join('');
+        document.getElementById('openHeading').innerHTML = t.open + `<span class="open-badge">${OPEN_SHIFTS.length}</span>`;
+        document.getElementById('openList').innerHTML = OPEN_SHIFTS.map((s,i)=>shiftRow(s,i,'open')).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() { applySBBrand(); render(); });
+</script>
+
+<!-- Widget usage counter — see CLAUDE.md -->
+<script>(function(){try{if(location.search.indexOf('preview=1')!==-1)return;var n=location.pathname.split('/').pop();if(!n||n==='index.html')return;var url='https://widget-counter.klauejohann.workers.dev/bump/'+encodeURIComponent(n);if(navigator.sendBeacon)navigator.sendBeacon(url);else fetch(url,{method:'POST',keepalive:true}).catch(function(){});var k='widgetCounts',c=JSON.parse(localStorage.getItem(k)||'{}');c[n]=(c[n]||0)+1;localStorage.setItem(k,JSON.stringify(c));}catch(e){}})();</script>
+
+</body>
+</html>
