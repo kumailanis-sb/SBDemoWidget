@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="widget-description" content="Recognize colleagues with cards tagged to our values. Celebrate the people behind every counter.">
+<meta name="widget-name" content="Shining Moments">
+<title>Shining Moments</title>
+<style>
+  /* ------------------------------------------------------------------
+     BRAND TOKENS - UNVERIFIED approximations of the Chow Tai Fook look
+     (deep jewellery red + gold). Replace with the official hex values
+     from CTF brand guidelines before any customer-facing use.
+  ------------------------------------------------------------------- */
+  :root {
+    --primary: #b5121b;        /* CTF red (approx.) */
+    --primary-deep: #7d0b12;   /* darker red for gradients / hover */
+    --gold: #c19a3d;           /* gold accent (approx.) */
+    --gold-soft: #e9d49a;
+    --gold-wash: #f6efdc;
+    --bg: #faf6ee;
+    --surface: #ffffff;
+    --text: #2a1c1a;
+    --muted: #7a6a63;
+    --border: #eadfce;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(60,30,20,.07), 0 10px 28px rgba(60,30,20,.08);
+    --shadow-sm: 0 1px 2px rgba(60,30,20,.10);
+    --serif: Georgia, "Songti SC", "Songti TC", "Noto Serif CJK SC", "Noto Serif SC", "Noto Serif CJK TC", "Noto Serif TC", "Source Han Serif SC", "SimSun", "PMingLiU", "MingLiU", "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang HK", "PingFang TC", "Microsoft YaHei", "Microsoft JhengHei", "Noto Sans CJK SC", "Noto Sans CJK TC", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .widget { max-width: 100%; margin: 32px auto; padding: 0 40px 60px; }
+
+  /* Chinese: no tracking on CJK, and let long unbroken runs wrap */
+  :lang(zh) .hero-label, :lang(zh) .cw-header h1 { letter-spacing: 0; }
+  :lang(zh) .card-story, :lang(zh) .hero-story { line-height: 1.85; overflow-wrap: anywhere; }
+  :lang(zh) .cw-tab, :lang(zh) .value-pill, :lang(zh) .cw-btn { letter-spacing: .02em; }
+
+  button:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  /* ---- Header ---- */
+  .cw-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .cw-header h1 {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    margin: 0;
+    color: var(--primary-deep);
+  }
+  .cw-icon-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    background: var(--primary);
+    color: var(--gold-soft);
+    font-size: 26px; line-height: 1;
+    cursor: pointer; display: grid; place-items: center;
+    box-shadow: var(--shadow-sm);
+    transition: transform .12s ease, filter .12s ease;
+  }
+  .cw-icon-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .cw-icon-btn:active { transform: translateY(0); }
+  .cw-header-actions { display: flex; align-items: center; gap: 10px; }
+  .cw-reset {
+    border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .12s ease;
+  }
+  .cw-reset:hover { border-color: var(--primary); color: var(--primary); }
+  .cw-reset[hidden] { display: none; }
+
+  /* ---- Hero: the one memorable element ---- */
+  .hero {
+    position: relative;
+    background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 26px 28px;
+    margin-bottom: 26px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .hero::before {               /* inset gold frame, like a jewellery-box lid */
+    content: "";
+    position: absolute; inset: 8px;
+    border: 1px solid rgba(233,212,154,.55);
+    border-radius: 8px;
+    pointer-events: none;
+  }
+  .hero-label { font-size: 12px; font-weight: 600; letter-spacing: .08em; color: var(--gold-soft); margin-bottom: 16px; }
+  .hero-row { display: flex; gap: 18px; align-items: flex-start; }
+  .hero-avatar {
+    width: 58px; height: 58px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 18px; color: #fff; flex-shrink: 0;
+    box-shadow: 0 0 0 2px var(--gold), 0 0 0 5px rgba(233,212,154,.25);
+  }
+  .hero-body { flex: 1; min-width: 0; }
+  .hero-name { font-family: var(--serif); font-size: 21px; font-weight: 700; margin-bottom: 8px; }
+  .hero-value {
+    display: inline-block; padding: 4px 12px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 600;
+    background: rgba(233,212,154,.18); color: var(--gold-soft);
+    border: 1px solid rgba(233,212,154,.5);
+    margin-bottom: 12px;
+  }
+  .hero-story { font-family: var(--serif); font-size: 16.5px; line-height: 1.65; max-width: 70ch; }
+  .hero-from { margin-top: 12px; font-size: 13px; color: var(--gold-soft); }
+
+  /* ---- Tabs ---- */
+  .cw-tabs { display: flex; gap: 4px; background: var(--gold-wash); padding: 4px; border-radius: 12px; margin-bottom: 22px; }
+  .cw-tab {
+    flex: 1; border: none; background: transparent; padding: 9px 12px; border-radius: 9px;
+    font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .cw-tab:hover { color: var(--text); }
+  .cw-tab.active { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-sm); }
+
+  /* ---- Feed (2-row horizontal scroll) ---- */
+  .feed {
+    display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto);
+    grid-auto-columns: 380px; align-items: stretch; gap: 16px;
+    overflow-x: auto; overflow-y: hidden; padding-bottom: 14px;
+    scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: var(--gold) transparent;
+  }
+  .feed::-webkit-scrollbar { height: 10px; }
+  .feed::-webkit-scrollbar-track { background: transparent; }
+  .feed::-webkit-scrollbar-thumb { background: var(--gold-soft); border-radius: 999px; border: 2px solid var(--bg); }
+  .feed::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-top: 3px solid var(--v, var(--gold));   /* border colour encodes the value */
+    border-radius: var(--radius); padding: 18px;
+    box-shadow: var(--shadow-sm); display: flex; flex-direction: column;
+    scroll-snap-align: start;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .card-header { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0;
+  }
+  .card-meta { min-width: 0; }
+  .card-from { font-size: 13.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .card-from .to { color: var(--gold); font-weight: 700; }
+  .card-time { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .card-value {
+    align-self: flex-start; padding: 4px 11px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; margin-bottom: 10px;
+  }
+  .card-story { font-family: var(--serif); font-size: 15px; line-height: 1.7; margin: 0 0 14px; }
+  .card-footer { display: flex; margin-top: auto; }
+  .reaction {
+    border: 1px solid var(--border); background: var(--surface); border-radius: 999px;
+    padding: 6px 14px; font-size: 13px; font-weight: 600; color: var(--muted);
+    cursor: pointer; transition: all .12s ease;
+  }
+  .reaction:hover { border-color: var(--primary); color: var(--primary); }
+  .reaction.on { background: rgba(181,18,27,.08); border-color: rgba(181,18,27,.35); color: var(--primary); }
+
+  /* ---- Card image thumbnail ---- */
+  .card-thumb {
+    width: 100%; height: 130px; object-fit: cover; border-radius: 8px; margin: 0 0 16px;
+    cursor: zoom-in; display: block; background: var(--gold-wash); transition: filter .12s ease;
+  }
+  .card-thumb:hover { filter: brightness(.94); }
+
+  /* ---- Lightbox ---- */
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(30,12,10,.85);
+    display: grid; place-items: center; padding: 32px; z-index: 300; cursor: zoom-out;
+    animation: fadeIn .15s ease;
+  }
+  .lightbox[hidden] { display: none; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: 10px; box-shadow: 0 24px 64px rgba(0,0,0,.5); animation: pop .18s ease; }
+  .lightbox-close {
+    position: absolute; top: 20px; right: 24px; width: 40px; height: 40px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,.15); color: #fff; font-size: 22px; line-height: 1;
+    cursor: pointer; display: grid; place-items: center; transition: background .12s ease;
+  }
+  .lightbox-close:hover { background: rgba(255,255,255,.28); }
+
+  .empty { grid-row: 1 / -1; text-align: center; color: var(--muted); padding: 48px 24px; font-size: 15px; white-space: nowrap; }
+
+  /* ---- Modal ---- */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(42,28,26,.55);
+    display: grid; place-items: center; padding: 20px; z-index: 100;
+  }
+  .modal-backdrop[hidden] { display: none; }
+  .modal {
+    background: var(--surface); border-radius: 16px; border-top: 4px solid var(--primary);
+    padding: 26px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(42,28,26,.3); animation: pop .18s ease;
+  }
+  @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal h3 { font-family: var(--serif); margin: 0 0 18px; font-size: 21px; font-weight: 700; color: var(--primary-deep); }
+  .modal label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 16px 0 7px; }
+  .modal select, .modal textarea {
+    width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+    font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface);
+  }
+  .modal select:focus, .modal textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(193,154,61,.2); }
+  .modal textarea { min-height: 92px; resize: vertical; }
+
+  .image-field { margin-top: 7px; }
+  .image-btn {
+    display: inline-flex; align-items: center; gap: 7px; border: 1px dashed var(--gold);
+    background: var(--surface); color: var(--muted); border-radius: 10px; padding: 9px 14px;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all .12s ease;
+  }
+  .image-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .image-preview { position: relative; margin-top: 10px; display: none; }
+  .image-preview.show { display: block; }
+  .image-preview img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; display: block; }
+  .image-remove {
+    position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%;
+    border: none; background: rgba(42,28,26,.75); color: #fff; font-size: 16px; line-height: 1;
+    cursor: pointer; display: grid; place-items: center;
+  }
+  .image-remove:hover { background: rgba(42,28,26,.92); }
+
+  .value-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .value-pill {
+    border: 1.5px solid var(--border); background: var(--surface); border-radius: 10px;
+    padding: 9px 12px; font-size: 13px; font-weight: 600; color: var(--text);
+    cursor: pointer; text-align: left; transition: all .12s ease;
+  }
+  .value-pill:hover { border-color: var(--v); }
+  .value-pill.selected { border-color: var(--v); background: color-mix(in srgb, var(--v) 12%, white); color: var(--v); }
+
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .cw-btn { border: none; border-radius: 10px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .12s ease; }
+  .cw-btn-secondary { background: var(--gold-wash); color: var(--text); }
+  .cw-btn-secondary:hover { background: #efe5c8; }
+  .cw-btn-primary { background: var(--primary); color: #fff; }
+  .cw-btn-primary:hover:not(:disabled) { background: var(--primary-deep); }
+  .cw-btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ---- Toast ---- */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: var(--primary-deep); color: var(--gold-soft);
+    border: 1px solid var(--gold);
+    padding: 12px 22px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    box-shadow: 0 8px 24px rgba(42,28,26,.3); z-index: 200; animation: toastIn .25s ease;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 620px) {
+    .feed { grid-auto-columns: 82%; }
+    .value-grid { grid-template-columns: 1fr; }
+    .widget { margin: 16px auto; padding: 0 16px 40px; }
+    .hero { padding: 22px 20px; }
+  }
+</style>
+</head>
+<body>
+  <div class="widget">
+    <div class="cw-header">
+      <h1 data-i18n="title">Shining Moments</h1>
+      <div class="cw-header-actions">
+        <button class="cw-reset" id="reset-cards" data-i18n="reset" hidden>Reset</button>
+        <button class="cw-icon-btn" id="open-send" data-i18n-title="send" aria-label="Send" title="Send">+</button>
+      </div>
+    </div>
+
+    <div class="hero" id="hero"></div>
+
+    <div class="cw-tabs" role="tablist">
+      <button class="cw-tab active" data-tab="recent" data-i18n="tabRecent">Recent</button>
+      <button class="cw-tab" data-tab="sent" data-i18n="tabSent">Sent</button>
+      <button class="cw-tab" data-tab="received" data-i18n="tabReceived">Received</button>
+    </div>
+
+    <div class="feed" id="feed"></div>
+  </div>
+
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3 data-i18n="modalTitle">Recognize a colleague</h3>
+      <label for="recipient" data-i18n="recipient">Recipient</label>
+      <select id="recipient"></select>
+      <label data-i18n="value">Value</label>
+      <div class="value-grid" id="value-grid"></div>
+      <label for="story" data-i18n="story">Your story</label>
+      <textarea id="story" data-i18n-placeholder="storyPlaceholder" placeholder="What did they do?"></textarea>
+      <label data-i18n="photo">Photo (optional)</label>
+      <div class="image-field">
+        <button type="button" class="image-btn" id="pick-image">📷 <span data-i18n="addPhoto">Add a photo</span></button>
+        <input type="file" id="image-input" accept="image/*" hidden>
+        <div class="image-preview" id="image-preview">
+          <img id="image-preview-img" alt="Preview">
+          <button type="button" class="image-remove" id="image-remove" data-i18n-title="removePhoto" title="Remove photo" aria-label="Remove photo">×</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="cw-btn cw-btn-secondary" id="cancel-send" data-i18n="cancel">Cancel</button>
+        <button class="cw-btn cw-btn-primary" id="confirm-send" data-i18n="send" disabled>Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="lightbox-close" id="lightbox-close" data-i18n-title="close" title="Close" aria-label="Close">×</button>
+    <img id="lightbox-img" alt="Shoutout photo">
+  </div>
+
+  <script>
+    // --- Language detection (Simplified / Traditional Chinese + English) ---
+    const LANG = (() => {
+      // ?lang=zh-CN / zh-HK / en-GB / en-US forces a language (handy for testing)
+      const forced = new URLSearchParams(location.search).get('lang');
+      const l = (forced || (navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
+      // Traditional: zh-HK, zh-TW, zh-MO, or any zh-Hant tag
+      if (l.startsWith('zh-hk') || l.startsWith('zh-tw') || l.startsWith('zh-mo') || l.includes('hant')) return 'zh-HK';
+      // Simplified: zh, zh-CN, zh-SG, zh-Hans...
+      if (l.startsWith('zh')) return 'zh-CN';
+      if (l === 'en-gb') return 'en-GB';
+      return 'en-US';
+    })();
+    document.documentElement.lang = LANG;
+
+    // --- Translations (zh strings need native review before go-live) ---
+    const T = {
+      'zh-CN': {
+        removePhoto: '移除照片', close: '关闭', savedSession: '仅在本次会话中保存（图片过大，无法保留）', imageError: '无法读取该图片',
+        title: '闪耀时刻', tabRecent: '最新', tabSent: '已发送', tabReceived: '已收到',
+        send: '发送', cancel: '取消', reset: '重置', modalTitle: '表扬同事',
+        recipient: '接收人', value: '价值观', story: '你的故事',
+        storyPlaceholder: '他/她做了什么让你感动？', shoutoutOfWeek: '本周之星',
+        photo: '照片（选填）', addPhoto: '添加照片',
+        thanks: '表扬已发送', empty: '暂无卡片',
+        valueIntegrity: '诚信', valueCraft: '匠心', valueCare: '用心服务',
+        valueTeam: '团结协作', valueInnovation: '创新', valueHeritage: '传承',
+        timeNow: '刚刚', timeMinAgo: '${n}分钟前', timeHrAgo: '${n}小时前', timeDayAgo: '${n}天前',
+      },
+      'zh-HK': {
+        removePhoto: '移除相片', close: '關閉', savedSession: '只會喺今次瀏覽期間保存（相片太大，未能保留）', imageError: '無法讀取該相片',
+        title: '閃耀時刻', tabRecent: '最新', tabSent: '已發送', tabReceived: '已收到',
+        send: '發送', cancel: '取消', reset: '重設', modalTitle: '讚賞同事',
+        recipient: '收件人', value: '價值觀', story: '你的故事',
+        storyPlaceholder: '佢做咗啲乜令你感動？', shoutoutOfWeek: '本週之星',
+        photo: '相片（選填）', addPhoto: '新增相片',
+        thanks: '讚賞已發送', empty: '暫時未有卡片',
+        valueIntegrity: '誠信', valueCraft: '匠心', valueCare: '用心服務',
+        valueTeam: '團結協作', valueInnovation: '創新', valueHeritage: '傳承',
+        timeNow: '剛剛', timeMinAgo: '${n}分鐘前', timeHrAgo: '${n}小時前', timeDayAgo: '${n}日前',
+      },
+      'en-GB': {
+        removePhoto: 'Remove photo', close: 'Close', savedSession: 'Saved for this session only (image too large to keep)', imageError: 'Could not read that image',
+        title: 'Shining Moments', tabRecent: 'Recent', tabSent: 'Sent', tabReceived: 'Received',
+        send: 'Send', cancel: 'Cancel', reset: 'Reset', modalTitle: 'Recognise a colleague',
+        recipient: 'Recipient', value: 'Value', story: 'Your story',
+        storyPlaceholder: 'What did they do?', shoutoutOfWeek: 'Star of the Week',
+        photo: 'Photo (optional)', addPhoto: 'Add a photo',
+        thanks: 'Recognition sent', empty: 'No cards yet',
+        valueIntegrity: 'Integrity', valueCraft: 'Craftsmanship', valueCare: 'Heartfelt Service',
+        valueTeam: 'Teamwork', valueInnovation: 'Innovation', valueHeritage: 'Heritage',
+        timeNow: 'just now', timeMinAgo: '${n} min ago', timeHrAgo: '${n} hr ago', timeDayAgo: '${n} d ago',
+      },
+      'en-US': {
+        removePhoto: 'Remove photo', close: 'Close', savedSession: 'Saved for this session only (image too large to keep)', imageError: 'Could not read that image',
+        title: 'Shining Moments', tabRecent: 'Recent', tabSent: 'Sent', tabReceived: 'Received',
+        send: 'Send', cancel: 'Cancel', reset: 'Reset', modalTitle: 'Recognize a colleague',
+        recipient: 'Recipient', value: 'Value', story: 'Your story',
+        storyPlaceholder: 'What did they do?', shoutoutOfWeek: 'Star of the Week',
+        photo: 'Photo (optional)', addPhoto: 'Add a photo',
+        thanks: 'Recognition sent', empty: 'No cards yet',
+        valueIntegrity: 'Integrity', valueCraft: 'Craftsmanship', valueCare: 'Heartfelt Service',
+        valueTeam: 'Teamwork', valueInnovation: 'Innovation', valueHeritage: 'Heritage',
+        timeNow: 'just now', timeMinAgo: '${n} min ago', timeHrAgo: '${n} hr ago', timeDayAgo: '${n} d ago',
+      },
+    };
+    const t = T[LANG] ?? T['en-US'];
+
+    function tr(key, vars) {
+      let s = t[key] || key;
+      if (vars) for (const k in vars) s = s.replace('${' + k + '}', vars[k]);
+      return s;
+    }
+
+    // Story fields: story (en), storyZh (zh-CN), storyZhHK (zh-HK)
+    const LANG_SUFFIX = { 'zh-CN': 'Zh', 'zh-HK': 'ZhHK', 'en-GB': '', 'en-US': '' };
+    function loc(obj, key) {
+      const sfx = LANG_SUFFIX[LANG] || '';
+      return (sfx ? obj[key + sfx] : undefined) || obj[key];
+    }
+
+    // --- Date helpers ---
+    const now = new Date();
+    const hoursAgo = n => new Date(now.getTime() - n * 3600000);
+    const daysAgo = n => new Date(now.getTime() - n * 86400000);
+
+    function timeLabel(date) {
+      const diff = (now - date) / 1000;
+      if (diff < 60) return t.timeNow;
+      if (diff < 3600) return tr('timeMinAgo', { n: Math.floor(diff / 60) });
+      if (diff < 86400) return tr('timeHrAgo', { n: Math.floor(diff / 3600) });
+      return tr('timeDayAgo', { n: Math.floor(diff / 86400) });
+    }
+
+    // --- Values (PLACEHOLDERS - confirm against CTF's published values) ---
+    const VALUES = [
+      { id: 'integrity',  key: 'valueIntegrity',  color: '#b5121b', icon: '◆' },
+      { id: 'craft',      key: 'valueCraft',      color: '#9a7314', icon: '✦' },
+      { id: 'care',       key: 'valueCare',       color: '#a63a5c', icon: '❤' },
+      { id: 'team',       key: 'valueTeam',       color: '#2f5f8a', icon: '●' },
+      { id: 'innovation', key: 'valueInnovation', color: '#2e7d5b', icon: '✿' },
+      { id: 'heritage',   key: 'valueHeritage',   color: '#7a4a2b', icon: '❖' },
+    ];
+    const valueOf = id => VALUES.find(v => v.id === id);
+
+    // --- Demo data (fictional) ---
+    const ME = 'Daniel Chan';
+    const PEOPLE = [
+      'Patrick Anderson', 'Maria Apathangelou', 'Mohammed Ashour', 'Marcus Barlow',
+      'Davide Bonchamp', 'Daniel Chan', 'Jon Cochran', 'Fred Duchamp',
+      'Zan Fingust', 'Henry Fitz', 'Frank Fox', 'Ruby Gray',
+      'Edward Hall', 'Joe Holt', 'Ron Jacks', 'Klemen Jerman',
+      'Cosmo Kramer', 'Maya Kumar', 'Jon Lam', 'Thomas Lawrence',
+      'Jeffrey Lee', 'Kay Lion', 'Todd Lu', 'Zsofia Lynn',
+      'Jan Morris', 'Lutz Morrison', 'Joel Riggs', 'Elizabeth Rorke',
+      'Max Rugen', 'Kelsey Rupowski', 'Anne Ryder', 'Luisa Schnepper',
+      'Elisa Simmons', 'Miranda Smith', 'Melanie Smithson', 'Steven Thompson',
+      'Eira Topé', 'Fiona Travis', 'Martin Wolf', 'Inna Zilberov'
+    ];
+
+    const CARDS = [
+      { id: 1, from: 'Maria Apathangelou', to: 'Patrick Anderson', value: 'craft',
+        story: 'Stayed after closing to resize a ring that belonged to a customer\u2019s late mother, so it would fit her daughter in time for the wedding. She teared up at the counter.',
+        storyZh: '打烊后留下来，为一位顾客已故母亲的戒指改圈，让女儿能在婚礼前戴上。顾客在柜台前红了眼眶。',
+        storyZhHK: '收鋪後留低，為一位顧客已故母親嘅戒指改圈，等女兒趕得及喺婚禮前戴上。顧客喺櫃檯前紅咗眼眶。',
+        when: hoursAgo(2), reactions: 24, reacted: true, hero: true },
+      { id: 2, from: 'Maya Kumar', to: 'Mohammed Ashour', value: 'integrity',
+        story: 'Noticed a pricing tag error after a customer had already paid. Called her back the same day and refunded the difference without being asked.',
+        storyZh: '发现价签有误时顾客已付款，当天就主动联系她，并在对方没有提出的情况下退还了差价。',
+        storyZhHK: '發現價錢牌有誤時顧客已經俾咗錢，即日主動聯絡佢，喺對方未開口之前退返差價。',
+        when: hoursAgo(6), reactions: 17, reacted: false },
+      { id: 3, from: 'Elisa Simmons', to: 'Anne Ryder', value: 'care',
+        story: 'Remembered a regular customer\u2019s 30th anniversary and had a small card and tea ready when the couple walked in.',
+        storyZh: '记得一位常客夫妇结婚三十周年，他们进店时已备好小卡片和热茶。',
+        storyZhHK: '記得一對常客夫婦結婚三十週年，佢哋入到鋪頭時已經準備好小卡同熱茶。',
+        when: daysAgo(1), reactions: 19, reacted: false },
+      { id: 4, from: 'Patrick Anderson', to: 'Lutz Morrison', value: 'innovation',
+        story: 'Built a simple shift-swap checklist on the shared tablet. Handovers are faster and nobody misses the display count anymore.',
+        storyZh: '在共用平板上做了一个简单的换班清单，交接更快，再也不会漏掉展柜盘点。',
+        storyZhHK: '喺共用平板上做咗個簡單嘅換更清單，交更快咗，亦唔會再漏咗展櫃盤點。',
+        when: daysAgo(2), reactions: 11, reacted: true },
+      { id: 5, from: 'Mohammed Ashour', to: 'Daniel Chan', value: 'team',
+        story: 'Covered two extra weekend shifts during the festive rush so the rest of us could be with family. Never complained once.',
+        storyZh: '节日高峰期多顶了两个周末班，让其他同事能陪家人，从未抱怨过一句。',
+        storyZhHK: '節日旺季多頂咗兩個週末更，等其他同事可以陪家人，一句怨言都冇。',
+        when: daysAgo(3), reactions: 22, reacted: true },
+      { id: 6, from: 'Daniel Chan', to: 'Maria Apathangelou', value: 'heritage',
+        story: 'Spent her lunch break walking me through how to explain gold purity and hallmarks to first-time buyers. I felt ready on my first week.',
+        storyZh: '利用午休时间教我如何向首次购买的顾客讲解黄金成色与印记，让我第一周就充满信心。',
+        storyZhHK: '用咗自己午飯時間教我點樣同第一次買金嘅顧客講解成色同印記，令我第一個星期已經好有信心。',
+        when: daysAgo(4), reactions: 15, reacted: false },
+      { id: 7, from: 'Ruby Gray', to: 'Marcus Barlow', value: 'care',
+        story: 'Stayed calm and kind with a customer who had lost an earring at the mall. Helped retrace her steps and found it at the escalator.',
+        storyZh: '一位顾客在商场里丢了耳环，他始终耐心温和，陪她一路回头寻找，最后在扶梯旁找到了。',
+        storyZhHK: '一位顧客喺商場度跌咗耳環，佢一直保持耐心同親切，陪佢行返轉頭搵，最後喺扶手電梯旁搵到。',
+        when: daysAgo(5), reactions: 13, reacted: false },
+      { id: 8, from: 'Anne Ryder', to: 'Kelsey Rupowski', value: 'craft',
+        story: 'Spotted a hairline flaw in a clasp during the evening quality check and pulled the piece before it reached the counter.',
+        storyZh: '在晚间品检时发现扣头有细微瑕疵，在上柜前就把这件货品撤下。',
+        storyZhHK: '喺夜晚品檢時發現扣頭有細微瑕疵，喺上櫃之前已經將件貨品撤低。',
+        when: daysAgo(6), reactions: 9, reacted: false },
+    ];
+
+    // --- Persistence (localStorage) ---
+    // Seed cards stay read-only; user-created cards are stored separately.
+    // NOTE: storage may be blocked inside a sandboxed iframe; cards then live in-memory only.
+    const STORE_KEY = 'ctfShiningMoments.userCards';
+
+    function loadUserCards() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+        return raw.map(c => ({ ...c, when: new Date(c.when) }));
+      } catch (e) { return []; }
+    }
+    function saveUserCards() {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(CARDS.filter(c => c.userCreated)));
+      } catch (e) {
+        if (e && e.name === 'QuotaExceededError') throw e;
+      }
+    }
+    (function restoreCards() {
+      const saved = loadUserCards();
+      if (saved.length) CARDS.unshift(...saved);
+    })();
+
+    // --- State ---
+    let activeTab = 'recent';
+    let selectedValue = null;
+
+    // --- Helpers ---
+    function initials(name) {
+      const parts = name.split(' ').filter(p => !/^(dr|mr|mrs|ms|prof)\.?$/i.test(p));
+      return (parts[0][0] + (parts[parts.length - 1][0] || '')).toUpperCase();
+    }
+    // Warm, brand-adjacent avatar palette (no off-brand neon)
+    const AVATAR_COLORS = ['#b5121b','#9a7314','#a63a5c','#2f5f8a','#2e7d5b','#7a4a2b','#6b3a6e','#3d6b6b'];
+    function avatarColor(name) {
+      let h = 0;
+      for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+      return AVATAR_COLORS[h % AVATAR_COLORS.length];
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (t[key] !== undefined) el.textContent = t[key];
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.dataset.i18nPlaceholder;
+        if (t[key] !== undefined) el.placeholder = t[key];
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.dataset.i18nTitle;
+        if (t[key] !== undefined) { el.title = t[key]; el.setAttribute('aria-label', t[key]); }
+      });
+    }
+
+    // --- Render ---
+    function renderHero() {
+      const c = CARDS.find(x => x.hero) || CARDS[0];
+      const v = valueOf(c.value);
+      document.getElementById('hero').innerHTML = `
+        <div class="hero-label">${escapeHtml(t.shoutoutOfWeek)}</div>
+        <div class="hero-row">
+          <div class="hero-avatar" style="background:${avatarColor(c.to)}">${escapeHtml(initials(c.to))}</div>
+          <div class="hero-body">
+            <div class="hero-name">${escapeHtml(c.to)}</div>
+            <div class="hero-value">${v.icon} ${escapeHtml(t[v.key])}</div>
+            <div class="hero-story">${escapeHtml(loc(c, 'story'))}</div>
+            <div class="hero-from">${escapeHtml(c.from)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFeed() {
+      let cards = CARDS.slice();
+      if (activeTab === 'sent') cards = cards.filter(c => c.from === ME);
+      if (activeTab === 'received') cards = cards.filter(c => c.to === ME);
+
+      const feed = document.getElementById('feed');
+      if (!cards.length) { feed.innerHTML = `<div class="empty">${escapeHtml(t.empty)}</div>`; return; }
+
+      feed.innerHTML = cards.map(c => {
+        const v = valueOf(c.value);
+        return `
+          <article class="card" style="--v:${v.color}">
+            <header class="card-header">
+              <div class="avatar" style="background:${avatarColor(c.from)}">${escapeHtml(initials(c.from))}</div>
+              <div class="card-meta">
+                <div class="card-from"><strong>${escapeHtml(c.from)}</strong><span class="to">›</span><strong>${escapeHtml(c.to)}</strong></div>
+                <div class="card-time">${escapeHtml(timeLabel(c.when))}</div>
+              </div>
+            </header>
+            <span class="card-value" style="background:${v.color}1a;color:${v.color}">${v.icon} ${escapeHtml(t[v.key])}</span>
+            <p class="card-story">${escapeHtml(loc(c, 'story'))}</p>
+            ${c.image ? `<img class="card-thumb" src="${escapeHtml(c.image)}" alt="" data-img="${escapeHtml(c.image)}">` : ''}
+            <footer class="card-footer">
+              <button class="reaction ${c.reacted ? 'on' : ''}" data-card="${c.id}">❤ ${c.reactions}</button>
+            </footer>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function render() { renderHero(); renderFeed(); updateResetBtn(); }
+
+    function updateResetBtn() {
+      const btn = document.getElementById('reset-cards');
+      if (btn) btn.hidden = !CARDS.some(c => c.userCreated);
+    }
+
+    // --- Modal ---
+    let pendingImage = null;
+
+    // Downscale to keep localStorage under its ~5MB cap: max 800px, JPEG q0.72.
+    function processImageFile(file) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith('image/')) { reject(); return; }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const MAX = 800;
+            let { width, height } = img;
+            if (width > MAX || height > MAX) {
+              const scale = MAX / Math.max(width, height);
+              width = Math.round(width * scale);
+              height = Math.round(height * scale);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.72));
+          };
+          img.onerror = reject;
+          img.src = reader.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function setPreview(dataUrl) {
+      pendingImage = dataUrl;
+      const wrap = document.getElementById('image-preview');
+      if (dataUrl) {
+        document.getElementById('image-preview-img').src = dataUrl;
+        wrap.classList.add('show');
+      } else {
+        wrap.classList.remove('show');
+        document.getElementById('image-input').value = '';
+      }
+    }
+
+    function openModal() {
+      selectedValue = null;
+      pendingImage = null;
+      setPreview(null);
+      const sel = document.getElementById('recipient');
+      sel.innerHTML = PEOPLE.filter(n => n !== ME).map(n => `<option>${escapeHtml(n)}</option>`).join('');
+      document.getElementById('value-grid').innerHTML = VALUES.map(v =>
+        `<button type="button" class="value-pill" data-value="${v.id}" style="--v:${v.color}">${v.icon} ${escapeHtml(t[v.key])}</button>`
+      ).join('');
+      document.getElementById('story').value = '';
+      document.getElementById('confirm-send').disabled = true;
+      document.getElementById('modal').hidden = false;
+    }
+    function closeModal() { document.getElementById('modal').hidden = true; }
+
+    function checkValid() {
+      const story = document.getElementById('story').value.trim();
+      document.getElementById('confirm-send').disabled = !(selectedValue && story);
+    }
+
+    function submitCard() {
+      const to = document.getElementById('recipient').value;
+      const story = document.getElementById('story').value.trim();
+      if (!selectedValue || !story) return;
+      const card = {
+        id: Date.now(), from: ME, to, value: selectedValue, story,
+        when: new Date(), reactions: 0, reacted: false, userCreated: true
+      };
+      if (pendingImage) card.image = pendingImage;
+      CARDS.unshift(card);
+      try { saveUserCards(); } catch (e) { showToast(t.savedSession); }
+      closeModal();
+      render();
+      showToast(t.thanks);
+    }
+
+    function showToast(msg) {
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2400);
+    }
+
+    // --- Lightbox ---
+    function openLightbox(src) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox').hidden = false;
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').hidden = true;
+      document.getElementById('lightbox-img').src = '';
+    }
+
+    // --- Events ---
+    document.addEventListener('click', e => {
+      const tab = e.target.closest('.cw-tab');
+      if (tab) {
+        activeTab = tab.dataset.tab;
+        document.querySelectorAll('.cw-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === activeTab));
+        renderFeed();
+        return;
+      }
+      const rxn = e.target.closest('.reaction');
+      if (rxn) {
+        const card = CARDS.find(c => c.id === Number(rxn.dataset.card));
+        if (card.reacted) { card.reactions = Math.max(0, card.reactions - 1); card.reacted = false; }
+        else { card.reactions++; card.reacted = true; }
+        if (card.userCreated) { try { saveUserCards(); } catch (err) {} }
+        renderFeed();
+        return;
+      }
+      const thumb = e.target.closest('.card-thumb');
+      if (thumb) { openLightbox(thumb.dataset.img); return; }
+      if (e.target.id === 'lightbox' || e.target.id === 'lightbox-close') { closeLightbox(); return; }
+      if (e.target.closest('#pick-image')) { document.getElementById('image-input').click(); return; }
+      if (e.target.id === 'image-remove') { setPreview(null); return; }
+      if (e.target.closest('#open-send')) { openModal(); return; }
+      if (e.target.id === 'reset-cards') {
+        try { localStorage.removeItem(STORE_KEY); } catch (err) {}
+        for (let i = CARDS.length - 1; i >= 0; i--) if (CARDS[i].userCreated) CARDS.splice(i, 1);
+        render();
+        return;
+      }
+      if (e.target.id === 'cancel-send') { closeModal(); return; }
+      if (e.target.id === 'modal') { closeModal(); return; }
+      if (e.target.id === 'confirm-send') { submitCard(); return; }
+      const pill = e.target.closest('.value-pill');
+      if (pill) {
+        selectedValue = pill.dataset.value;
+        document.querySelectorAll('.value-pill').forEach(p => p.classList.toggle('selected', p.dataset.value === selectedValue));
+        checkValid();
+      }
+    });
+
+    document.addEventListener('input', e => { if (e.target.id === 'story') checkValid(); });
+
+    document.addEventListener('change', e => {
+      if (e.target.id === 'image-input') {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        processImageFile(file).then(setPreview).catch(() => showToast(t.imageError));
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (!document.getElementById('lightbox').hidden) closeLightbox();
+        else if (!document.getElementById('modal').hidden) closeModal();
+      }
+    });
+
+    // --- Init ---
+    applyTranslations();
+    render();
+  </script>
+</body>
+</html>
