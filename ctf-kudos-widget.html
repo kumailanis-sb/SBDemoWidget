@@ -270,12 +270,60 @@
     * { animation: none !important; transition: none !important; }
   }
 
-  /* ---- Responsive ---- */
+  /* ---- Mobile view (<= 620px wide: phone, Staffbase app, or a narrow column) ---- */
+  .show-more {
+    display: none;
+    width: 100%; min-height: 46px; margin-top: 4px;
+    border: 1px solid var(--gold); background: var(--surface); color: var(--primary);
+    border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
   @media (max-width: 620px) {
-    .feed { grid-auto-columns: 82%; }
-    .value-grid { grid-template-columns: 1fr; }
-    .widget { margin: 16px auto; padding: 0 16px 40px; }
-    .hero { padding: 22px 20px; }
+    .widget { margin: 12px auto; padding: 0 14px 28px; }
+    .cw-header { margin-bottom: 14px; }
+    .cw-header h1 { font-size: 22px; }
+    .cw-icon-btn { width: 48px; height: 48px; }
+
+    /* Hero stacks: avatar above text, tighter type */
+    .hero { padding: 20px 18px; margin-bottom: 18px; }
+    .hero::before { inset: 6px; }
+    .hero-row { flex-direction: column; gap: 12px; }
+    .hero-avatar { width: 48px; height: 48px; font-size: 16px; }
+    .hero-name { font-size: 19px; }
+    .hero-story { font-size: 15px; line-height: 1.75; }
+
+    .cw-tabs { margin-bottom: 16px; }
+    .cw-tab { padding: 12px 6px; }
+
+    /* Feed: one vertical list instead of the two-row sideways scroller */
+    .feed { display: flex; flex-direction: column; gap: 12px; overflow: visible; padding-bottom: 0; }
+    .card { padding: 16px; }
+    .reaction { min-height: 40px; padding: 8px 16px; }
+    .show-more { display: block; }
+    .empty { white-space: normal; padding: 32px 12px; }
+
+    /* Compose sheet slides up from the bottom */
+    .modal-backdrop { align-items: end; padding: 0; }
+    .modal {
+      max-width: none; max-height: 92vh;
+      border-radius: 18px 18px 0 0;
+      padding: 22px 18px calc(18px + env(safe-area-inset-bottom));
+      animation: slideUp .22s ease;
+    }
+    .modal select, .modal textarea { font-size: 16px; }       /* stops iOS zoom-on-focus */
+    .value-pill { padding: 12px 10px; }
+    .modal-actions { position: sticky; bottom: 0; background: var(--surface); padding-top: 14px; margin-top: 16px; }
+    .modal-actions .cw-btn { flex: 1; min-height: 46px; }
+
+    .lightbox { padding: 12px; }
+    .toast { bottom: 20px; max-width: 90%; text-align: center; }
+  }
+
+  /* Touch devices: no hover lift */
+  @media (hover: none) {
+    .card:hover { transform: none; box-shadow: var(--shadow-sm); }
+    .cw-icon-btn:hover { transform: none; filter: none; }
   }
 </style>
 </head>
@@ -348,6 +396,7 @@
     // --- Translations (zh strings need native review before go-live) ---
     const T = {
       'zh-CN': {
+        showMore: '查看更多', showLess: '收起',
         removePhoto: '移除照片', close: '关闭', savedSession: '仅在本次会话中保存（图片过大，无法保留）', imageError: '无法读取该图片',
         title: '闪耀时刻', tabRecent: '最新', tabSent: '已发送', tabReceived: '已收到',
         send: '发送', cancel: '取消', reset: '重置', modalTitle: '表扬同事',
@@ -360,6 +409,7 @@
         timeNow: '刚刚', timeMinAgo: '${n}分钟前', timeHrAgo: '${n}小时前', timeDayAgo: '${n}天前',
       },
       'zh-HK': {
+        showMore: '查看更多', showLess: '收起',
         removePhoto: '移除相片', close: '關閉', savedSession: '只會喺今次瀏覽期間保存（相片太大，未能保留）', imageError: '無法讀取該相片',
         title: '閃耀時刻', tabRecent: '最新', tabSent: '已發送', tabReceived: '已收到',
         send: '發送', cancel: '取消', reset: '重設', modalTitle: '讚賞同事',
@@ -372,6 +422,7 @@
         timeNow: '剛剛', timeMinAgo: '${n}分鐘前', timeHrAgo: '${n}小時前', timeDayAgo: '${n}日前',
       },
       'en-GB': {
+        showMore: 'Show more', showLess: 'Show less',
         removePhoto: 'Remove photo', close: 'Close', savedSession: 'Saved for this session only (image too large to keep)', imageError: 'Could not read that image',
         title: 'Shining Moments', tabRecent: 'Recent', tabSent: 'Sent', tabReceived: 'Received',
         send: 'Send', cancel: 'Cancel', reset: 'Reset', modalTitle: 'Recognise a colleague',
@@ -384,6 +435,7 @@
         timeNow: 'just now', timeMinAgo: '${n} min ago', timeHrAgo: '${n} hr ago', timeDayAgo: '${n} d ago',
       },
       'en-US': {
+        showMore: 'Show more', showLess: 'Show less',
         removePhoto: 'Remove photo', close: 'Close', savedSession: 'Saved for this session only (image too large to keep)', imageError: 'Could not read that image',
         title: 'Shining Moments', tabRecent: 'Recent', tabSent: 'Sent', tabReceived: 'Received',
         send: 'Send', cancel: 'Cancel', reset: 'Reset', modalTitle: 'Recognize a colleague',
@@ -452,7 +504,7 @@
 
     const CARDS = [
       { id: 1, from: 'Maria Apathangelou', to: 'Patrick Anderson', value: 'craft',
-        story: 'Stayed after closing to resize a ring that belonged to a customer\u2019s late mother, so it would fit her daughter in time for the wedding. She teared up at the counter.',
+        story: 'Stayed after closing to resize a ring that belonged to a customer\'s late mother, so it would fit her daughter in time for the wedding. She teared up at the counter.',
         storyZh: '打烊后留下来，为一位顾客已故母亲的戒指改圈，让女儿能在婚礼前戴上。顾客在柜台前红了眼眶。',
         storyZhHK: '收鋪後留低，為一位顧客已故母親嘅戒指改圈，等女兒趕得及喺婚禮前戴上。顧客喺櫃檯前紅咗眼眶。',
         when: hoursAgo(2), reactions: 24, reacted: true, hero: true },
@@ -462,7 +514,7 @@
         storyZhHK: '發現價錢牌有誤時顧客已經俾咗錢，即日主動聯絡佢，喺對方未開口之前退返差價。',
         when: hoursAgo(6), reactions: 17, reacted: false },
       { id: 3, from: 'Elisa Simmons', to: 'Anne Ryder', value: 'care',
-        story: 'Remembered a regular customer\u2019s 30th anniversary and had a small card and tea ready when the couple walked in.',
+        story: 'Remembered a regular customer\'s 30th anniversary and had a small card and tea ready when the couple walked in.',
         storyZh: '记得一位常客夫妇结婚三十周年，他们进店时已备好小卡片和热茶。',
         storyZhHK: '記得一對常客夫婦結婚三十週年，佢哋入到鋪頭時已經準備好小卡同熱茶。',
         when: daysAgo(1), reactions: 19, reacted: false },
@@ -519,6 +571,9 @@
     // --- State ---
     let activeTab = 'recent';
     let selectedValue = null;
+    let expanded = false;
+    const MOBILE_LIMIT = 4;
+    const mq = window.matchMedia('(max-width: 620px)');
 
     // --- Helpers ---
     function initials(name) {
@@ -577,7 +632,12 @@
       const feed = document.getElementById('feed');
       if (!cards.length) { feed.innerHTML = `<div class="empty">${escapeHtml(t.empty)}</div>`; return; }
 
-      feed.innerHTML = cards.map(c => {
+      const limited = mq.matches && !expanded && cards.length > MOBILE_LIMIT;
+      const shown = limited ? cards.slice(0, MOBILE_LIMIT) : cards;
+      const moreBtn = (mq.matches && cards.length > MOBILE_LIMIT)
+        ? `<button class="show-more" id="show-more">${escapeHtml(expanded ? t.showLess : t.showMore)}</button>` : '';
+
+      feed.innerHTML = shown.map(c => {
         const v = valueOf(c.value);
         return `
           <article class="card" style="--v:${v.color}">
@@ -596,7 +656,7 @@
             </footer>
           </article>
         `;
-      }).join('');
+      }).join('') + moreBtn;
     }
 
     function render() { renderHero(); renderFeed(); updateResetBtn(); }
@@ -726,6 +786,7 @@
       if (e.target.id === 'lightbox' || e.target.id === 'lightbox-close') { closeLightbox(); return; }
       if (e.target.closest('#pick-image')) { document.getElementById('image-input').click(); return; }
       if (e.target.id === 'image-remove') { setPreview(null); return; }
+      if (e.target.id === 'show-more') { expanded = !expanded; renderFeed(); return; }
       if (e.target.closest('#open-send')) { openModal(); return; }
       if (e.target.id === 'reset-cards') {
         try { localStorage.removeItem(STORE_KEY); } catch (err) {}
@@ -760,6 +821,9 @@
         else if (!document.getElementById('modal').hidden) closeModal();
       }
     });
+
+    // Re-render when crossing the mobile breakpoint (rotate / resize)
+    (mq.addEventListener ? mq.addEventListener('change', renderFeed) : mq.addListener(renderFeed));
 
     // --- Init ---
     applyTranslations();
