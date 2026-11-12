@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en-GB" style="--sb-brand: #00b1e2; --primary: #00b1e2;">
+<head>
+<!-- Staffbase brand color via ?brand= URL param (sb-brand-url-param) -->
+<script>(function(){try{var b=new URLSearchParams(location.search).get('brand');if(b&&/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(b)){document.documentElement.style.setProperty('--sb-brand',b);}}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="widget-name" content="Team Availability">
+<meta name="widget-description" content="General Manager view of staffing cover by role for the current shift period, with team members available to pick up extra shifts">
+<meta name="widget-tags" content="Scheduling, HR Data">
+<title>Team Availability</title>
+
+<style>
+    :root {
+        --primary: var(--sb-brand, #2563eb);
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --text: #1f2937;
+        --text-light: #6b7280;
+        --bg: #ffffff;
+        --bg-gray: #f9fafb;
+        --border: #e5e7eb;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --primary: var(--sb-brand, #3b9eff);
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text: #f3f4f6;
+            --text-light: #9ca3af;
+            --bg: #1f2937;
+            --bg-gray: #111827;
+            --border: #374151;
+        }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg); color: var(--text); margin: 0; padding: 16px;
+        -webkit-font-smoothing: antialiased;
+    }
+    .widget { width: 100%; max-width: 480px; margin: 0 auto; }
+
+    .cw-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .cw-head-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+    .cw-chip {
+        font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+        color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent);
+    }
+    .cw-chip.warn { color: var(--warning); background: color-mix(in srgb, var(--warning) 16%, transparent); }
+    .cw-chip.bad  { color: var(--danger);  background: color-mix(in srgb, var(--danger) 14%, transparent); }
+
+    .seg { display: flex; background: var(--bg-gray); border-radius: 10px; padding: 3px; gap: 2px; margin-bottom: 14px; }
+    .seg button {
+        flex: 1; border: none; background: transparent; color: var(--text-light); font-family: inherit;
+        font-size: 12px; font-weight: 600; padding: 7px 4px; border-radius: 8px; cursor: pointer; line-height: 1.25;
+    }
+    .seg button small { display: block; font-size: 10px; font-weight: 500; opacity: .8; }
+    .seg button[aria-pressed="true"] { background: var(--bg); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+    .seg button:focus-visible, .cw-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    .cw-section-heading {
+        font-size: 12px; font-weight: 600; color: var(--text-light);
+        display: flex; justify-content: space-between; align-items: center; margin: 4px 0 6px;
+    }
+
+    .cover-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .cover-row:last-child { border-bottom: none; }
+    .cover-role { flex-shrink: 0; width: 118px; font-size: 13px; font-weight: 600; }
+    .bar { flex: 1; height: 8px; border-radius: 4px; background: var(--bg-gray); overflow: hidden; }
+    .bar > i { display: block; height: 100%; border-radius: 4px; background: var(--success); }
+    .bar > i.warn { background: var(--warning); }
+    .bar > i.bad  { background: var(--danger); }
+    .cover-count { flex-shrink: 0; width: 64px; text-align: right; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .cover-count em { font-style: normal; font-size: 11px; font-weight: 600; margin-left: 4px; color: var(--danger); }
+    .cover-count em.warn { color: var(--warning); }
+
+    .avail-block { background: var(--bg-gray); border-radius: 12px; padding: 4px 14px; margin-top: 6px; }
+    .person { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+    .person:last-child { border-bottom: none; }
+    .avatar {
+        flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 700; color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, transparent);
+    }
+    .person-mid { flex: 1; min-width: 0; }
+    .person-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .person-sub { font-size: 12px; color: var(--text-light); }
+    .person-sub .need { color: var(--warning); font-weight: 600; }
+
+    .cw-btn {
+        border: none; font-family: inherit; cursor: pointer; font-weight: 600; font-size: 12px;
+        padding: 6px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; transition: all .15s;
+        background: var(--primary); color: #fff;
+    }
+    .cw-btn:hover { filter: brightness(0.93); }
+    .cw-btn.done { background: color-mix(in srgb, var(--success) 15%, transparent) !important; color: var(--success) !important; cursor: default; pointer-events: none; }
+
+    .empty { font-size: 13px; color: var(--text-light); padding: 12px 0; }
+    .away { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .away span { font-size: 12px; font-weight: 600; color: var(--text-light); background: var(--bg-gray); padding: 4px 10px; border-radius: 20px; }
+
+    @media (prefers-reduced-motion: reduce) { .cw-btn { transition: none; } }
+</style>
+</head>
+
+<body>
+
+<div class="widget">
+    <div class="cw-head">
+        <span class="cw-head-title" id="headDate"></span>
+        <span class="cw-chip" id="statusChip"></span>
+    </div>
+
+    <div class="seg" id="seg" role="group"></div>
+
+    <div class="cw-section-heading"><span id="coverHeading"></span><span id="coverTotal"></span></div>
+    <div id="coverList"></div>
+
+    <div class="cw-section-heading" style="margin-top:14px"><span id="availHeading"></span><span id="availCount"></span></div>
+    <div class="avail-block" id="availList"></div>
+
+    <div class="away" id="away"></div>
+</div>
+
+<script>
+    const LANG = (() => {
+        const l = navigator.language || '';
+        if (l.startsWith('de')) return 'de';
+        if (l.startsWith('fr')) return 'fr';
+        if (l.startsWith('es')) return 'es';
+        if (l.startsWith('ja')) return 'ja';
+        if (l === 'en-GB')      return 'en-GB';
+        return 'en-US';
+    })();
+    document.documentElement.lang = LANG;
+    const LOCALE = { 'de':'de-DE','fr':'fr-FR','es':'es-ES','ja':'ja-JP','en-GB':'en-GB','en-US':'en-US' }[LANG];
+
+    const EN = {
+        morning:'Morning', afternoon:'Afternoon', night:'Night',
+        cover:'Cover by role', avail:'Available to pick up a shift',
+        full:'Fully staffed', gaps:n => n + (n === 1 ? ' gap' : ' gaps'), short:n => '-' + n,
+        ask:'Ask', asked:'Asked', none:'Nobody is available for this period.',
+        needed:'Needed', free:'Free', leave:'On leave', sick:'Sick',
+        rn:'Registered nurse', en:'Enrolled nurse', pca:'Care staff', life:'Lifestyle', kit:'Kitchen'
+    };
+    const T = {
+        'en-GB': EN, 'en-US': EN,
+        de: { morning:'Früh', afternoon:'Spät', night:'Nacht',
+              cover:'Besetzung nach Rolle', avail:'Verfügbar für zusätzliche Schicht',
+              full:'Voll besetzt', gaps:n => n + (n === 1 ? ' Lücke' : ' Lücken'), short:n => '-' + n,
+              ask:'Anfragen', asked:'Angefragt', none:'Niemand ist für diesen Zeitraum verfügbar.',
+              needed:'Benötigt', free:'Frei', leave:'Im Urlaub', sick:'Krank',
+              rn:'Pflegefachkraft', en:'Pflegekraft', pca:'Pflegehilfe', life:'Betreuung', kit:'Küche' },
+        fr: { morning:'Matin', afternoon:'Après-midi', night:'Nuit',
+              cover:'Couverture par poste', avail:'Disponibles pour un service',
+              full:'Effectif complet', gaps:n => n + (n === 1 ? ' manque' : ' manques'), short:n => '-' + n,
+              ask:'Demander', asked:'Demandé', none:'Personne n’est disponible sur cette période.',
+              needed:'Requis', free:'Libre', leave:'En congé', sick:'Malade',
+              rn:'Infirmier(ère)', en:'Infirmier(ère) aux.', pca:'Aide-soignant(e)', life:'Animation', kit:'Cuisine' },
+        es: { morning:'Mañana', afternoon:'Tarde', night:'Noche',
+              cover:'Cobertura por puesto', avail:'Disponibles para un turno',
+              full:'Plantilla completa', gaps:n => n + (n === 1 ? ' hueco' : ' huecos'), short:n => '-' + n,
+              ask:'Pedir', asked:'Solicitado', none:'Nadie está disponible en este periodo.',
+              needed:'Necesario', free:'Libre', leave:'De permiso', sick:'De baja',
+              rn:'Enfermero/a', en:'Enfermero/a aux.', pca:'Auxiliar de cuidados', life:'Animación', kit:'Cocina' },
+        ja: { morning:'日勤', afternoon:'遅番', night:'夜勤',
+              cover:'職種別の充足状況', avail:'追加シフト可能なスタッフ',
+              full:'充足', gaps:n => n + '名不足', short:n => '-' + n,
+              ask:'依頼', asked:'依頼済み', none:'この時間帯に対応できるスタッフはいません。',
+              needed:'要補充', free:'対応可', leave:'休暇中', sick:'病欠',
+              rn:'看護師', en:'准看護師', pca:'介護スタッフ', life:'生活支援', kit:'厨房' }
+    };
+    const t = T[LANG] || EN;
+
+    // Sample data. Replace with the roster / HR feed when connecting a live source.
+    const PERIODS = [
+        { id:'morning',   from:'06:00', to:'14:00' },
+        { id:'afternoon', from:'14:00', to:'22:00' },
+        { id:'night',     from:'22:00', to:'06:00' }
+    ];
+    const COVER = {   // [required, staffed]. Staffed counts stay within the roster headcount per role.
+        morning:   { rn:[2,2], en:[1,1], pca:[4,3], life:[1,1], kit:[1,1] },
+        afternoon: { rn:[1,1], en:[1,0], pca:[3,3], life:[1,0], kit:[1,1] },
+        night:     { rn:[1,1], en:[0,0], pca:[2,1], life:[0,0], kit:[0,0] }
+    };
+    const PEOPLE = [   // Three people shown as available to pick up a shift
+        { name:'Ruby Gray',        title:'Care Assistant',       role:'pca',  periods:['morning','night'] },
+        { name:'Elisa Simmons',    title:'Enrolled Nurse',       role:'en',   periods:['afternoon'] },
+        { name:'Steven Thompson',  title:'Lifestyle Coordinator', role:'life', periods:['afternoon'] }
+    ];
+    const AWAY = { leave:2, sick:1 };
+
+    let current = 'morning';
+    const now = new Date();
+    const fmtHeaderDate = d => new Intl.DateTimeFormat(LOCALE, { weekday:'long', day:'numeric', month:'short' }).format(d);
+    const initials = n => n.split(' ').map(p => p[0]).join('').slice(0,2).toUpperCase();
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+    function applySBBrand() {
+        var sb = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim();
+        if (sb) { document.documentElement.style.setProperty('--primary', sb); return; }
+        try {
+            sb = window.parent.getComputedStyle(window.parent.document.documentElement).getPropertyValue('--sb-brand').trim();
+            if (sb) document.documentElement.style.setProperty('--primary', sb);
+        } catch (e) {}
+    }
+
+    function act(el, label) { el.textContent = label; el.classList.add('done'); }
+
+    function render() {
+        const cover = COVER[current];
+        const rows = Object.keys(cover).filter(r => cover[r][0] > 0).map(r => {
+            const req = cover[r][0], got = cover[r][1], gap = Math.max(0, req - got);
+            const level = gap === 0 ? '' : (gap === 1 ? 'warn' : 'bad');
+            return { r, req, got, gap, level };
+        });
+        const totalReq = rows.reduce((a, x) => a + x.req, 0);
+        const totalGot = rows.reduce((a, x) => a + Math.min(x.got, x.req), 0);
+        const gapRoles = rows.filter(x => x.gap > 0).map(x => x.r);
+        const totalGap = totalReq - totalGot;
+
+        document.getElementById('headDate').textContent = fmtHeaderDate(now);
+
+        const chip = document.getElementById('statusChip');
+        chip.textContent = totalGap === 0 ? t.full : t.gaps(totalGap);
+        chip.className = 'cw-chip' + (totalGap === 0 ? '' : (rows.some(x => x.gap > 1) ? ' bad' : ' warn'));
+
+        document.getElementById('seg').innerHTML = PERIODS.map(p =>
+            `<button type="button" aria-pressed="${p.id === current}" data-p="${p.id}">${t[p.id]}<small>${p.from}–${p.to}</small></button>`
+        ).join('');
+        document.querySelectorAll('#seg button').forEach(b => b.onclick = () => { current = b.dataset.p; render(); });
+
+        document.getElementById('coverHeading').textContent = t.cover;
+        document.getElementById('coverTotal').textContent = totalGot + ' / ' + totalReq;
+        document.getElementById('coverList').innerHTML = rows.map(x => `
+            <div class="cover-row">
+                <div class="cover-role">${esc(t[x.r])}</div>
+                <div class="bar"><i class="${x.level}" style="width:${Math.min(100, Math.round(x.got / x.req * 100))}%"></i></div>
+                <div class="cover-count">${x.got}/${x.req}${x.gap ? `<em class="${x.level}">${t.short(x.gap)}</em>` : ''}</div>
+            </div>`).join('');
+
+        const p = PERIODS.find(q => q.id === current);
+        const people = PEOPLE.filter(x => x.periods.includes(current))
+            .sort((a, b) => gapRoles.includes(b.role) - gapRoles.includes(a.role));
+        document.getElementById('availHeading').textContent = t.avail;
+        document.getElementById('availCount').textContent = people.length;
+        document.getElementById('availList').innerHTML = people.length ? people.map(x => `
+            <div class="person">
+                <div class="avatar" aria-hidden="true">${esc(initials(x.name))}</div>
+                <div class="person-mid">
+                    <div class="person-name">${esc(x.name)}</div>
+                    <div class="person-sub">${esc(x.title)}${gapRoles.includes(x.role) ? ` <span class="need">· ${t.needed}</span>` : ''} · ${t.free} ${p.from}–${p.to}</div>
+                </div>
+                <button type="button" class="cw-btn" onclick="act(this,'${t.asked}')">${t.ask}</button>
+            </div>`).join('') : `<div class="empty">${t.none}</div>`;
+
+        document.getElementById('away').innerHTML =
+            `<span>${t.leave} ${AWAY.leave}</span><span>${t.sick} ${AWAY.sick}</span>`;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() { applySBBrand(); render(); });
+</script>
+
+<!-- Widget usage counter — see CLAUDE.md -->
+<script>(function(){try{if(location.search.indexOf('preview=1')!==-1)return;var n=location.pathname.split('/').pop();if(!n||n==='index.html')return;var url='https://widget-counter.klauejohann.workers.dev/bump/'+encodeURIComponent(n);if(navigator.sendBeacon)navigator.sendBeacon(url);else fetch(url,{method:'POST',keepalive:true}).catch(function(){});var k='widgetCounts',c=JSON.parse(localStorage.getItem(k)||'{}');c[n]=(c[n]||0)+1;localStorage.setItem(k,JSON.stringify(c));}catch(e){}})();</script>
+
+</body>
+</html>
