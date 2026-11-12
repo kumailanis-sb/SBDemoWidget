@@ -1,0 +1,200 @@
+<style>
+    .widget {
+        --primary: #00A4FD;
+        --success: #2E9D6B;
+        --warning: #E0A100;
+        --danger: #D64545;
+        --text: #1B2430;
+        --muted: #667085;
+        --surface: #FFFFFF;
+        --surface-alt: #F3F5F8;
+        --border: #E2E6EC;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--text);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        max-width: 420px;
+        box-sizing: border-box;
+    }
+    .widget *, .widget *::before, .widget *::after { box-sizing: border-box; }
+    .cw-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+    .cw-head-title { font-size: 15px; font-weight: 600; }
+    .cw-chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--surface-alt); color: var(--muted); white-space: nowrap; }
+    .shift-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: var(--surface-alt); margin-bottom: 12px; }
+    .shift-label, .handover-label, .stat-label { font-size: 12px; color: var(--muted); }
+    .shift-time, .handover-time { font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .handover { text-align: right; }
+    .handover-time { justify-content: flex-end; }
+    .cw-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex: none; }
+    .stat-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .stat { padding: 12px; border: 1px solid var(--border); border-radius: 10px; }
+    .stat-value { font-size: 22px; font-weight: 700; margin: 2px 0 6px; }
+    .stat-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .cw-section-heading { font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
+    .diet-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .diet { display: inline-flex; align-items: baseline; gap: 6px; font-size: 13px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); }
+    .diet b { font-weight: 700; }
+    .diet.alert { border-color: var(--danger); color: var(--danger); }
+    .round { display: grid; grid-template-columns: 48px 1fr auto; gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--border); font-size: 14px; }
+    .round:first-child { border-top: 0; }
+    .round-time { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .round-loc { font-size: 12px; color: var(--muted); text-align: right; }
+    #roundList { margin-bottom: 16px; }
+    .cw-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 14px; font-size: 14px; font-weight: 600; font-family: inherit; color: var(--danger); background: transparent; border: 1px solid var(--danger); border-radius: 10px; cursor: pointer; }
+    .cw-btn:hover { background: rgba(214, 69, 69, .08); }
+    .cw-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+</style>
+
+<div class="widget">
+    <div class="cw-head">
+        <span class="cw-head-title" id="headDate"></span>
+        <span class="cw-chip" id="unitChip"></span>
+    </div>
+
+    <div class="shift-card">
+        <div>
+            <div class="shift-label" id="shiftLabel"></div>
+            <div class="shift-time"><span class="cw-dot"></span><span id="shiftTime"></span></div>
+        </div>
+        <div class="handover">
+            <div class="handover-label" id="handoverLabel"></div>
+            <div class="handover-time" id="handoverTime"></div>
+        </div>
+    </div>
+
+    <div class="stat-strip">
+        <div class="stat">
+            <div class="stat-label" id="prepLabel"></div>
+            <div class="stat-value" id="prepValue"></div>
+            <div class="stat-sub" id="prepSub"></div>
+        </div>
+        <div class="stat">
+            <div class="stat-label" id="staffLabel"></div>
+            <div class="stat-value" id="staffValue"></div>
+            <div class="stat-sub" id="staffSub"></div>
+        </div>
+    </div>
+
+    <div class="cw-section-heading" id="dietHeading"></div>
+    <div class="diet-row" id="dietList"></div>
+
+    <div class="cw-section-heading" id="roundsHeading"></div>
+    <div id="roundList"></div>
+
+    <button class="cw-btn" id="incidentBtn" type="button"><span aria-hidden="true">⚠</span><span id="incidentLabel"></span></button>
+</div>
+
+<script>
+    const LANG = (() => {
+        const l = navigator.language || '';
+        if (l.startsWith('de')) return 'de';
+        if (l.startsWith('fr')) return 'fr';
+        if (l.startsWith('es')) return 'es';
+        if (l.startsWith('ja')) return 'ja';
+        if (l === 'en-AU') return 'en-AU';
+        if (l === 'en-GB') return 'en-GB';
+        return 'en-US';
+    })();
+    document.documentElement.lang = LANG;
+
+    const LOCALE = { 'de':'de-DE','fr':'fr-FR','es':'es-ES','ja':'ja-JP','en-AU':'en-AU','en-GB':'en-GB','en-US':'en-US' }[LANG];
+    const LANG_SUFFIX = { 'de':'De','fr':'Fr','es':'Es','ja':'Ja','en-AU':'','en-GB':'','en-US':'' }[LANG];
+    const loc = (o, base) => o[base + LANG_SUFFIX] ?? o[base];
+
+    const EN = {
+        onShift:'On shift', next:'Next service', prep:'Residents today', prepSub:'in care today',
+        staff:'Kitchen team', staffSub:'on shift', diet:'DIETARY ALERTS', rounds:'MY SERVICES TODAY',
+        reportIncident:'Report food safety incident'
+    };
+    const T = {
+        de: { onShift:'Im Dienst', next:'Nächster Service', prep:'Bewohner heute', prepSub:'in Betreuung',
+              staff:'Küchenteam', staffSub:'im Dienst', diet:'ERNÄHRUNGSHINWEISE', rounds:'MEINE SERVICES HEUTE',
+              reportIncident:'Lebensmittelsicherheit melden' },
+        fr: { onShift:'En service', next:'Prochain service', prep:'Résidents du jour', prepSub:'pris en charge',
+              staff:'Équipe cuisine', staffSub:'en service', diet:'ALERTES ALIMENTAIRES', rounds:'MES SERVICES DU JOUR',
+              reportIncident:'Signaler un incident alimentaire' },
+        es: { onShift:'En turno', next:'Próximo servicio', prep:'Residentes hoy', prepSub:'en el centro',
+              staff:'Equipo de cocina', staffSub:'en turno', diet:'ALERTAS DIETÉTICAS', rounds:'MIS SERVICIOS DE HOY',
+              reportIncident:'Reportar incidente alimentario' },
+        ja: { onShift:'勤務中', next:'次の提供', prep:'本日の入居者', prepSub:'入居中',
+              staff:'調理スタッフ', staffSub:'勤務中', diet:'食事アラート', rounds:'本日の提供スケジュール',
+              reportIncident:'食品安全インシデント報告' },
+        'en-AU': EN, 'en-GB': EN, 'en-US': EN
+    };
+    const t = T[LANG] || EN;
+
+    const UNIT = 'Main Kitchen';
+    const SHIFT = '05:30 – 13:30';
+    const NEXT_SERVICE = '12:00';
+    const RESIDENTS = 96, STAFF = 4, STAFF_TARGET = 5;
+
+    // Texture-modified diets follow IDDSI levels; counts are placeholders
+    const DIETS = [
+        { n:9, alert:false, label:'IDDSI 4 Pureed', labelDe:'IDDSI 4 Püriert', labelFr:'IDDSI 4 Mixé', labelEs:'IDDSI 4 Triturado', labelJa:'IDDSI 4 ピューレ' },
+        { n:7, alert:false, label:'IDDSI 5 Minced & moist', labelDe:'IDDSI 5 Fein zerkleinert', labelFr:'IDDSI 5 Haché et humide', labelEs:'IDDSI 5 Picado y húmedo', labelJa:'IDDSI 5 刻み・とろみ' },
+        { n:4, alert:true,  label:'Nut allergy', labelDe:'Nussallergie', labelFr:'Allergie aux noix', labelEs:'Alergia a frutos secos', labelJa:'ナッツアレルギー' },
+        { n:3, alert:true,  label:'Coeliac', labelDe:'Zöliakie', labelFr:'Cœliaque', labelEs:'Celiaquía', labelJa:'セリアック病' },
+        { n:6, alert:false, label:'Diabetic', labelDe:'Diabetiker', labelFr:'Diabétique', labelEs:'Diabético', labelJa:'糖尿病食' }
+    ];
+
+    const SERVICES = [
+        { time:'07:30', name:'Breakfast service', nameDe:'Frühstück', nameFr:'Petit-déjeuner', nameEs:'Servicio de desayuno', nameJa:'朝食提供',
+          loc:'96 residents', locDe:'96 Bewohner', locFr:'96 résidents', locEs:'96 residentes', locJa:'入居者96名' },
+        { time:'09:00', name:'Fridge & freezer temp log', nameDe:'Kühltemperatur-Protokoll', nameFr:'Relevé températures froid', nameEs:'Registro de temperaturas', nameJa:'冷蔵・冷凍温度記録',
+          loc:'Cool room', locDe:'Kühlraum', locFr:'Chambre froide', locEs:'Cámara fría', locJa:'冷蔵室' },
+        { time:'10:00', name:'Morning tea', nameDe:'Vormittagstee', nameFr:'Collation du matin', nameEs:'Merienda de mañana', nameJa:'午前のお茶',
+          loc:'All wings', locDe:'Alle Flügel', locFr:'Toutes les ailes', locEs:'Todas las alas', locJa:'全棟' },
+        { time:'12:00', name:'Lunch service', nameDe:'Mittagessen', nameFr:'Service du déjeuner', nameEs:'Servicio de almuerzo', nameJa:'昼食提供',
+          loc:'Dining room', locDe:'Speisesaal', locFr:'Salle à manger', locEs:'Comedor', locJa:'食堂' }
+    ];
+
+    function applySBBrand() {
+        var sb = getComputedStyle(document.documentElement).getPropertyValue('--sb-brand').trim();
+        if (sb) { document.documentElement.style.setProperty('--primary', sb); return; }
+        try {
+            sb = window.parent.getComputedStyle(window.parent.document.documentElement).getPropertyValue('--sb-brand').trim();
+            if (sb) document.documentElement.style.setProperty('--primary', sb);
+        } catch (e) {}
+    }
+
+    const $ = id => document.getElementById(id);
+
+    function render() {
+        $('headDate').textContent =
+            new Intl.DateTimeFormat(LOCALE, { weekday:'long', day:'numeric', month:'short' }).format(new Date());
+        $('unitChip').textContent = UNIT;
+
+        $('shiftLabel').textContent = t.onShift;
+        $('shiftTime').textContent = SHIFT;
+        $('handoverLabel').textContent = t.next;
+        $('handoverTime').textContent = NEXT_SERVICE;
+
+        $('prepLabel').textContent = t.prep;
+        $('prepValue').textContent = RESIDENTS;
+        $('prepSub').textContent = t.prepSub;
+
+        $('staffLabel').textContent = t.staff;
+        $('staffValue').textContent = STAFF + '/' + STAFF_TARGET;
+        $('staffSub').textContent = t.staffSub;
+
+        $('dietHeading').textContent = t.diet;
+        $('dietList').innerHTML = DIETS.map(function(d) {
+            return '<span class="diet' + (d.alert ? ' alert' : '') + '"><b>' + d.n + '</b>' + loc(d, 'label') + '</span>';
+        }).join('');
+
+        $('roundsHeading').textContent = t.rounds;
+        $('roundList').innerHTML = SERVICES.map(function(r) {
+            return '<div class="round">' +
+                '<span class="round-time">' + r.time + '</span>' +
+                '<span class="round-name">' + loc(r, 'name') + '</span>' +
+                '<span class="round-loc">' + loc(r, 'loc') + '</span>' +
+                '</div>';
+        }).join('');
+
+        $('incidentLabel').textContent = t.reportIncident;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() { applySBBrand(); render(); });
+</script>
